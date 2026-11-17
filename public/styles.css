@@ -610,3 +610,8 @@ button.chip:active { transform: scale(0.96); }
 .nav-line > * { flex: none; }
 .nav-line .nav-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .nav-sep { white-space: pre; }
+.list-sub.list-ok { font-weight: 600; color: var(--gold-ink, var(--label)); }
+.group.sessions .link-row { gap: 0; }
+.group.sessions .link-row .icon-btn { width: 34px; height: 34px; min-width: 0; padding: 0; flex: none; }
+.group.sessions .link-row .icon-btn .ico { width: 18px; height: 18px; }
+.group.sessions .list-main { flex: 1; min-width: 0; }

@@ -260,6 +260,8 @@ async function renderHome() {
         h('span', { class: 'list-title', text: s.title }),
         h('span', { class: 'list-best' }),
         pending.has(s.id) ? h('span', { class: 'list-sub warn', 'data-pending': s.id, text: 'Cambios sin enviar' }) : null),
+      h('button', { type: 'button', class: 'icon-btn subtle', 'aria-label': `Invitar a «${s.title}»`, title: 'Enlace de invitación', onclick: () => { const d = C.decodeLink(s.data); if (d) invite(d.session); } }, icon('mail')),
+      h('button', { type: 'button', class: 'icon-btn subtle', 'aria-label': `Copiar mi enlace personal de «${s.title}»`, title: 'Mi enlace personal', onclick: () => copyPersonalFor(s) }, icon('person')),
       h('button', {
         type: 'button', class: 'icon-btn subtle', 'aria-label': `Quitar «${s.title}» de este móvil`,
         onclick: async () => { if (!confirm(`¿Quitar «${s.title}»? Saldrás de la quedada y se borrarán tus horas para todos.`)) return; await removeSession(s.id); renderHome(); },
@@ -316,9 +318,9 @@ async function fillHomeBest(sessions) {
     if (!out.isConnected) return; // se ha salido del inicio
     const full = blocks.filter((b) => b.full);
     out.replaceChildren(...(full.length
-      ? full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayShort(b.date)} · ${C.formatTime(b.startH)}–${C.formatTime(b.endH)} · Todos` }))
+      ? [h('span', { class: 'list-sub list-ok', text: '¡Hay hora disponible!' }), ...full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayLong(b.date)}, de ${C.formatTime(b.startH)} a ${C.formatTime(b.endH)}` }))]
       : people.length
-        ? [h('span', { class: 'list-sub', text: `${people.length} de ${Math.max(total, people.length)} han enviado` }),
+        ? [h('span', { class: 'list-sub', text: 'Todavía no hay hora concretada' }),
             h('span', { class: 'chips home-chips' }, ...people.map((p) => h('span', { class: `chip ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.me ? `${p.name} (tú)` : p.name)),
               ...Array.from({ length: Math.max(0, total - people.length) }, () => h('span', { class: 'chip pending', text: 'Pendiente' })))]
         : [h('span', { class: 'list-sub', text: 'Aún nadie ha marcado' })]));
@@ -592,11 +594,7 @@ function renderSession() {
     h('nav', { class: 'navrow' },
       h('a', { class: 'icon-btn', href: '#', 'aria-label': 'Inicio' }, icon('back')),
       h('div', { class: 'nav-info' },
-        h('p', { class: 'nav-line' }, els.month, h('span', { class: 'nav-sep', text: ' · ' }), h('span', { class: 'nav-title', text: session.title }), els.progress),
         els.best),
-      h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Invitar: compartir el enlace de invitación', title: 'Enlace de invitación', onclick: invite }, icon('mail')),
-      h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Copiar mi enlace personal', title: 'Mi enlace personal', onclick: copyPersonal }, icon('person')),
-      h('button', { type: 'button', class: 'icon-btn danger', 'aria-label': 'Salir de la quedada', title: 'Salir de la quedada', onclick: leave }, icon('trash')),
       els.send),
     h('h1', { class: 'sr-only', text: session.title }),
     els.status,
@@ -928,10 +926,10 @@ function fillBest() {
 }
 
 // ---------- invitar ----------
-async function invite() {
-  const url = inviteUrl(ctx.session);
+async function invite(session = ctx.session) {
+  const url = inviteUrl(session);
   if (navigator.share) {
-    try { await navigator.share({ title: `Let's Meet: ${ctx.session.title}`, text: `Marca cuándo puedes para «${ctx.session.title}»:`, url }); return; } catch (e) { if (e?.name === 'AbortError') return; }
+    try { await navigator.share({ title: `Let's Meet: ${session.title}`, text: `Marca cuándo puedes para «${session.title}»:`, url }); return; } catch (e) { if (e?.name === 'AbortError') return; }
   }
   if (await copyText(url)) toast('Enlace copiado. Pégalo en el grupo.');
   else toast('No se ha podido copiar. Copia la dirección de la barra del navegador.');
@@ -982,6 +980,14 @@ function renderSettings() {
       inAppBrowser ? h('p', { class: 'group-foot', text: 'Estás en el navegador de otra app. Si pasas a Safari o Chrome, copia antes tu enlace personal y ábrelo allí.' }) : null),
     h('section', { class: 'group' },
       h('div', { class: 'group-body glass' }, h('button', { type: 'button', class: 'row action danger', onclick: leave }, icon('trash'), 'Salir de la quedada')))));
+}
+// Desde el inicio: el enlace personal de esa quedada (con la clave guardada en este móvil).
+async function copyPersonalFor(s) {
+  const d = C.decodeLink(s.data);
+  const me = await store.get(meKey(s.id));
+  if (!d || !me?.priv) { toast('Aún no te has unido a esta quedada.'); return; }
+  const url = `${location.origin}${location.pathname}#${C.encodeLink(d.session, me.priv)}`;
+  toast((await copyText(url)) ? 'Enlace personal copiado. No lo compartas con nadie.' : 'No se ha podido copiar.');
 }
 async function copyPersonal() {
   toast((await copyText(personalUrl())) ? 'Enlace personal copiado. No lo compartas con nadie.' : 'No se ha podido copiar.');
