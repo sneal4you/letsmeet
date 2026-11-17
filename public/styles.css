@@ -638,7 +638,8 @@ button.chip:active { transform: scale(0.96); }
 .cell.filled.full { box-shadow: 0 0 0 1.5px var(--gold); }
 /* mes y, a su derecha, la flecha de la semana anterior */
 .dh-month-nav { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 3px; }
-.screen.session { --hc: 54px; }
-.dh-back { display: grid; place-items: center; width: 20px; height: 26px; padding: 0; border: 0; border-radius: 8px; background: var(--accent-soft); color: var(--accent); }
-.dh-back .ico { width: 13px; height: 13px; stroke-width: 2.6; }
-.dh-back:active { transform: scale(0.92); }
+.screen.session { --hc: 62px; }
+/* horas pasadas: igual que los días fuera de la quedada */
+.cell.past, .cell.past.filled { background: transparent; box-shadow: inset 0 0 0 1px var(--cell-rim); opacity: 0.5; }
+.day-head .week-btn.dh-back { width: var(--ac); height: 34px; border-radius: 11px; flex: none; }
+.dh-month-nav { gap: 4px; }
