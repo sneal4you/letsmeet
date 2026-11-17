@@ -607,7 +607,6 @@ function renderSession() {
     h('div', { class: 'board-body' }, els.hours, els.cells, h('span')));
   root.replaceChildren(h('main', { class: 'screen session' },
     h('nav', { class: 'navrow' },
-      h('a', { class: 'icon-btn', href: '#', 'aria-label': 'Inicio' }, icon('back')),
       h('div', { class: 'nav-info' },
         els.chips)),
     h('h1', { class: 'sr-only', text: session.title }),
