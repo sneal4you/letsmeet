@@ -221,7 +221,7 @@ async function renderHome() {
   for (const s of sessions) if ((await store.get(`out:${s.id}`)) || (await store.get(meKey(s.id)))?.dirty) pending.add(s.id);
   flushPending().catch((e) => console.error(e));
   let n = 4; let color = 'blue';
-  const title = h('input', { id: 'f-title', class: 'input bare', maxlength: C.TITLE_MAX, placeholder: 'Cena del viernes, partido…', autocomplete: 'off', enterkeyhint: 'next', 'aria-label': 'Título' });
+  const title = h('input', { id: 'f-title', class: 'input bare', maxlength: C.TITLE_MAX, placeholder: 'Trabajo de grupo, reunión de equipo…', autocomplete: 'off', enterkeyhint: 'next', 'aria-label': 'Título' });
   const name = h('input', { id: 'f-name', class: 'input bare', maxlength: C.NAME_MAX, placeholder: 'Tu nombre', autocomplete: 'given-name', enterkeyhint: 'done', 'aria-label': 'Tu nombre' });
   const err = h('p', { class: 'form-error', role: 'alert' });
   const nOut = h('output', { class: 'stepper-value', 'aria-live': 'polite', text: n });
@@ -270,7 +270,7 @@ async function renderHome() {
     memoryBanner(),
     list,
     h('form', { class: 'create', onsubmit: create, novalidate: true },
-      group('Tú', nc.rows),
+      group('Nombre', nc.rows),
       group('Nueva quedada',
         row(null, title),
         h('div', { class: 'row compact-row' },
@@ -290,14 +290,17 @@ async function fillHomeBest(sessions) {
     const out = rowEl?.querySelector('.list-best');
     if (!out) continue;
     let blocks = [];
+    let people = [];
     try {
       const dec = C.decodeLink(s.data);
       if (dec) {
         const session = dec.session;
         const eng = await new SyncEngine({ session, store, ...engineOpts }).init();
         const me = await store.get(meKey(s.id));
-        const ps = eng.people().filter((p) => !me || p.pid !== me.pid).map((p) => ({ pid: p.pid, slots: p.slots }));
+        const others = eng.people().filter((p) => !me || p.pid !== me.pid);
+        const ps = others.map((p) => ({ pid: p.pid, slots: p.slots }));
         if (me?.name) { try { ps.push({ pid: me.pid, slots: C.slotsFromB64(session, me.slots) }); } catch { /* copia dañada */ } }
+        people = [...(me?.name ? [{ name: me.name, color: me.color }] : []), ...others.map((p) => ({ name: p.name, color: p.color }))];
         const today = C.todayIndex(session);
         const now = new Date();
         const fromHour = (Math.floor((now.getHours() * 60 + now.getMinutes()) / 30) + 1) / 2;
@@ -305,10 +308,13 @@ async function fillHomeBest(sessions) {
       }
     } catch (e) { console.error(e); }
     if (!out.isConnected) return; // se ha salido del inicio
-    out.replaceChildren(...(blocks.length
-      ? blocks.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayShort(b.date)} · ${C.formatTime(b.startH)}–${C.formatTime(b.endH)} · ${b.full ? 'Todos' : `${b.count}/${b.required}`}` }))
-      : [h('span', { class: 'list-sub', text: 'Aún nadie ha marcado' })]));
-    rowEl.classList.toggle('full', blocks.some((b) => b.full));
+    const full = blocks.filter((b) => b.full);
+    out.replaceChildren(...(full.length
+      ? full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayShort(b.date)} · ${C.formatTime(b.startH)}–${C.formatTime(b.endH)} · Todos` }))
+      : people.length
+        ? [h('span', { class: 'list-sub best-who' }, ...people.map((p) => h('span', { class: `who ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.name)))]
+        : [h('span', { class: 'list-sub', text: 'Aún nadie ha marcado' })]));
+    rowEl.classList.toggle('full', full.length > 0);
   }
 }
 
@@ -580,7 +586,7 @@ function renderJoin() {
     h('section', { class: 'group' }, h('h2', { class: 'group-title', text: 'Ya están' }), h('div', { class: 'group-body glass pad' }, who)),
     restored ? h('p', { class: 'banner', text: 'Buscando tu horario en los relés. Si no aparece, escribe tu nombre para seguir.' }) : null,
     h('form', { class: 'create', onsubmit: join, novalidate: true },
-      group('Tú', nc.rows),
+      group('Nombre', nc.rows),
       err,
       h('button', { type: 'submit', class: 'btn primary wide' }, 'Entrar y marcar mis horas')),
     note ? h('p', { class: 'foot', text: note }) : h('p', { class: 'foot', text: 'Sin cuentas. Tu horario viaja cifrado: solo lo ve quien tiene el enlace.' })));
@@ -994,7 +1000,7 @@ function renderSettings() {
     h('nav', { class: 'navrow' }, h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Volver', onclick: back }, icon('back'))),
     h('header', { class: 'session-head' }, h('h1', { class: 'large-title', text: 'Ajustes' }), h('p', { class: 'muted', text: ctx.session.title })),
     h('form', { class: 'create', onsubmit: save, novalidate: true },
-      group('Tú', nc.rows),
+      group('Nombre', nc.rows),
       err,
       h('button', { type: 'submit', class: 'btn primary wide' }, 'Guardar')),
     h('section', { class: 'group' },
