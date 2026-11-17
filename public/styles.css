@@ -673,3 +673,7 @@ button.chip:active { transform: scale(0.96); }
 .screen.home .brand .brand-mark { margin-bottom: 0; flex: none; transform: scale(0.8); }
 .screen.home .brand .large-title { flex: 1; min-width: 0; }
 .home-account { flex: none; }
+/* avisos abajo, por encima de la barra de Enviar */
+.toasts { top: auto; bottom: calc(70px + var(--safe-b)); flex-direction: column-reverse; }
+.toast { transform: translateY(10px) scale(0.98); }
+.toast.in { transform: none; }
