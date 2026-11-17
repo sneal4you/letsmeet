@@ -40,6 +40,7 @@ const ICONS = {
   back: [['path', 'M15 18l-6-6 6-6']],
   next: [['path', 'M9 6l6 6-6 6']],
   mail: [['path', 'M3 6h18v12H3zM3 7l9 6 9-6']],
+  send: [['path', 'M4 12l16-8-6 16-2.5-6.5zM11.5 13.5L20 4']],
   person: [['circle', 12, 8, 4], ['path', 'M4 21c0-4 4-6 8-6s8 2 8 6']],
   share: [['path', 'M12 3v12M8 7l4-4 4 4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6']],
   settings: [['path', 'M4 7h9M17 7h3M4 17h3M11 17h9'], ['circle', 15, 7, 2], ['circle', 9, 17, 2]],
@@ -582,7 +583,7 @@ function renderSession() {
     cells: h('div', { class: 'cells', role: 'grid', 'aria-label': 'Horas de la semana. Toca o arrastra para marcar cuándo puedes.' }),
     best: h('section', { class: 'best', 'aria-label': 'Mejores horas' }),
     status: h('span', { class: 'send-status', role: 'status', 'aria-live': 'polite' }),
-    send: h('button', { type: 'button', class: 'btn primary send-btn' }, 'Enviar'),
+    send: h('button', { type: 'button', class: 'icon-btn send-btn' }),
   };
   els.board = h('section', { class: 'board', 'aria-label': 'Rejilla de horas' },
     els.dayHead,
@@ -590,20 +591,19 @@ function renderSession() {
   root.replaceChildren(h('main', { class: 'screen session' },
     h('nav', { class: 'navrow' },
       h('a', { class: 'icon-btn', href: '#', 'aria-label': 'Inicio' }, icon('back')),
-      h('span', { class: 'nav-spacer' }),
+      h('div', { class: 'nav-info' },
+        h('p', { class: 'nav-line' }, els.month, h('span', { class: 'nav-sep', text: ' · ' }), h('span', { class: 'nav-title', text: session.title }), els.progress),
+        els.best),
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Invitar: compartir el enlace de invitación', title: 'Enlace de invitación', onclick: invite }, icon('mail')),
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Copiar mi enlace personal', title: 'Mi enlace personal', onclick: copyPersonal }, icon('person')),
-      h('button', { type: 'button', class: 'icon-btn danger', 'aria-label': 'Salir de la quedada', title: 'Salir de la quedada', onclick: leave }, icon('trash'))),
-    h('header', { class: 'session-head' },
-      h('h1', { class: 'large-title', text: session.title }),
-      h('p', { class: 'session-meta' }, els.progress, els.month)),
+      h('button', { type: 'button', class: 'icon-btn danger', 'aria-label': 'Salir de la quedada', title: 'Salir de la quedada', onclick: leave }, icon('trash')),
+      els.send),
+    h('h1', { class: 'sr-only', text: session.title }),
+    els.status,
     memoryBanner(),
     els.hint,
-    els.best,
     els.board,
-    els.chips),
-  // fuera de .screen: su animación de entrada (transform) haría que position: fixed se refiriese a ella
-  h('div', { class: 'sendbar glass' }, els.status, els.send));
+    els.chips));
   bindGrid(els.cells);
   fillPeople(); fillGrid(); fillBest(); fillSendbar(); fillConn();
   if (ctx.me.dirty) toast('Tienes cambios sin enviar.', { label: 'Enviar', fn: sendNow });
@@ -615,7 +615,8 @@ function fillPeople() {
   const ps = people();
   const total = Math.max(session.n, ps.length);
   const sent = ps.filter((p) => !p.me || meSent()).length;
-  els.progress.textContent = `${sent} de ${total} han enviado`;
+  els.progress.textContent = `${sent}/${total}`;
+  els.progress.setAttribute('aria-label', `${sent} de ${total} han enviado`);
   const pend = Math.max(0, session.n - ps.length);
   if (ctx.focus && !ps.some((p) => p.pid === ctx.focus)) ctx.focus = null;
   els.chips.replaceChildren(
@@ -657,8 +658,11 @@ function fillSendbar() {
   else if (meSent()) { text = 'Tus horas están enviadas'; label = 'Enviado'; disabled = true; cls = 'ok'; }
   else { text = 'Marca tus horas y envía'; }
   els.status.replaceChildren(h('span', { class: 'status-dot', 'aria-hidden': 'true' }), h('span', { text }));
-  els.status.className = `send-status ${cls}`;
-  els.send.replaceChildren(...(cls === 'ok' ? [icon('check'), label] : [label]));
+  els.status.className = `send-status sr-only ${cls}`;
+  els.send.className = `icon-btn send-btn ${cls}`;
+  els.send.setAttribute('aria-label', label === 'Enviado' ? 'Enviado' : `${label}: ${text}`);
+  els.send.title = text;
+  els.send.replaceChildren(icon(cls === 'ok' ? 'check' : 'send'));
   els.send.disabled = disabled;
   els.send.onclick = engine.status === 'queued' && !me.dirty ? () => { engine.resume(); engine._flushOutbox(); } : () => sendNow();
 }
@@ -911,7 +915,6 @@ function fillBest() {
   // sin coincidencias no ocupa sitio
   if (!blocks.length) { els.best.replaceChildren(); return; }
   els.best.replaceChildren(
-    h('h2', { class: 'best-title', text: 'Mejores horas' }),
     h('ol', { class: 'best-list' }, blocks.map((b) => h('li', {},
       h('button', {
         type: 'button', class: `best-item glass${b.full ? ' full' : ''}`,

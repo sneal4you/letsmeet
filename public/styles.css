@@ -177,7 +177,7 @@ button:disabled { cursor: default; }
   display: flex; flex-direction: column; gap: 22px;
   animation: rise 0.4s var(--ease) both;
 }
-.screen.session { gap: 8px; padding-bottom: calc(62px + var(--safe-b)); height: 100dvh; min-height: 480px; }
+.screen.session { gap: 6px; padding-bottom: calc(8px + var(--safe-b)); height: 100dvh; min-height: 480px; }
 /* todo cabe en la pantalla: la rejilla ocupa el alto que sobra */
 .screen.session .board { flex: 1 1 auto; gap: 0; }
 .screen.session .board-body { flex: 1 1 auto; padding-top: 4px; }
@@ -185,8 +185,8 @@ button:disabled { cursor: default; }
 .screen.session .session-head .large-title { font-size: 24px; }
 .screen.session .session-meta { font-size: 13px; justify-content: space-between; }
 .screen.session .month { color: var(--label-3); font-weight: 500; }
-.screen.session .icon-btn { width: 36px; height: 36px; }
-.screen.session .icon-btn .ico { width: 18px; height: 18px; }
+.screen.session .icon-btn { width: 32px; height: 32px; flex: none; }
+.screen.session .icon-btn .ico { width: 16px; height: 16px; }
 .screen.session .legend { justify-content: center; }
 /* Mejores horas en una sola línea fina: fecha y hora */
 .screen.session .best { gap: 0; }
@@ -588,3 +588,25 @@ button.chip:active { transform: scale(0.96); }
 .group.sessions .group-body { background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; overflow: visible; display: flex; flex-direction: column; gap: 10px; }
 .group.sessions .link-row { border-radius: 22px; background: var(--glass); border: 0.5px solid var(--rim); -webkit-backdrop-filter: blur(26px) saturate(185%); backdrop-filter: blur(26px) saturate(185%); }
 .group.sessions .link-row::before { display: none; }
+
+/* ---------- cabecera de la quedada: todo en la fila de navegación ---------- */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.screen.session .navrow { gap: 6px; align-items: center; }
+.nav-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.nav-line { margin: 0; font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--label-2); }
+.nav-line .month, .nav-sep { color: var(--label-3); font-weight: 500; }
+.nav-title { color: var(--label); font-weight: 700; }
+.nav-line .progress { margin-left: 6px; font-variant-numeric: tabular-nums; color: var(--label-2); font-weight: 600; }
+.nav-info .best-list { margin: 0; padding: 0; gap: 4px; scroll-padding: 0; }
+.nav-info .best-item { padding: 2px 8px; }
+.nav-info .best-when { font-size: 11px; }
+/* Enviar integrado: azul si hay cambios, verde cuando está enviado */
+.send-btn { color: var(--accent); }
+.send-btn.dirty, .send-btn.queued { background: var(--accent); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(0, 122, 255, 0.35); }
+.send-btn.ok { color: var(--ok); }
+.send-btn:disabled { opacity: 1; }
+.screen.session .send-btn { min-width: 0; min-height: 0; padding: 0; }
+.nav-line { display: flex; align-items: baseline; }
+.nav-line > * { flex: none; }
+.nav-line .nav-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.nav-sep { white-space: pre; }
