@@ -223,6 +223,16 @@ function row(label, control, extra = '') {
   return h('div', { class: `row ${extra}` }, label ? h('span', { class: 'row-label', text: label }) : null, control);
 }
 
+// Los detalles de acento (botones, enlaces, día de hoy…) usan el color elegido para el nombre.
+function applyAccent(color) {
+  const st = document.documentElement.style;
+  if (!color) { for (const k of ['--accent', '--accent-soft', '--accent-glow', '--accent-ink']) st.removeProperty(k); return; }
+  st.setProperty('--accent', `var(--c-${color})`);
+  st.setProperty('--accent-soft', `color-mix(in srgb, var(--c-${color}) 18%, transparent)`);
+  st.setProperty('--accent-glow', `color-mix(in srgb, var(--c-${color}) 35%, transparent)`);
+  st.setProperty('--accent-ink', ['yellow', 'mint', 'cyan'].includes(color) ? '#000' : '#fff');
+}
+
 // ---------- inicio ----------
 async function renderHome() {
   document.title = "Let's Meet";
@@ -258,7 +268,7 @@ async function renderHome() {
   const setFixed = () => nameBox?.classList.toggle('set', document.activeElement !== name && C.validateName(name.value).ok);
   name.addEventListener('blur', setFixed);
   name.addEventListener('focus', setFixed);
-  const drawPal = () => { nc.paint(color); palWrap.replaceChildren(palette({ selected: color, taken: new Map(), onPick: (c) => { color = c; nc.close(); drawPal(); saveProf(); } })); };
+  const drawPal = () => { nc.paint(color); applyAccent(color); palWrap.replaceChildren(palette({ selected: color, taken: new Map(), onPick: (c) => { color = c; nc.close(); drawPal(); saveProf(); } })); };
   drawPal();
   // en el inicio, cada toque en el círculo pasa al color siguiente (sin paleta)
   nc.rows[0].children[1].onclick = () => {
@@ -551,7 +561,7 @@ function renderJoin() {
   ctx.drawJoin = () => {
     const taken = takenColors(ctx.me?.pid);
     if (!picked) color = firstFree(taken, color);
-    nc.paint(color);
+    nc.paint(color); applyAccent(color);
     // sin paleta: cada toque en el círculo pasa al siguiente color libre
     nc.rows[0].lastChild.onclick = () => {
       const ids = C.COLORS.map((x) => x.id);
@@ -623,6 +633,7 @@ function chip(p, { extra = '', onclick = null, pressed = null } = {}) {
 
 // ---------- pantalla de sesión: rejilla de horas ----------
 function renderSession() {
+  applyAccent(ctx.me?.color);
   if (ctx.view !== 'session') window.scrollTo(0, 0);
   ctx.view = 'session';
   const { session } = ctx;
