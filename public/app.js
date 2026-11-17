@@ -741,7 +741,11 @@ function fillGrid({ dir = 0 } = {}) {
   els.hours.replaceChildren(...Array.from({ length: hours }, (_, k) => h('span', { class: 'hl', text: C.formatTime(C.slotHour(session, k)) })));
 
   // celdas
-  const isFullAt = (d, k) => d >= 0 && d < C.daysOf(session) && k >= 0 && k < hours && d >= today && C.isFull(counts[d * hours + k], required);
+  // hoy, las medias horas ya empezadas cuentan como pasadas (igual que en Mejores horas)
+  const nowD = new Date();
+  const nowFrom = (Math.floor((nowD.getHours() * 60 + nowD.getMinutes()) / 30) + 1) / 2;
+  const isPast = (d, k) => d < today || (d === today && C.slotHour(session, k) < nowFrom);
+  const isFullAt = (d, k) => d >= 0 && d < C.daysOf(session) && k >= 0 && k < hours && !isPast(d, k) && C.isFull(counts[d * hours + k], required);
   const focusP = ctx.focus ? ps.find((p) => p.pid === ctx.focus) : null;
   const cells = [];
   ctx.gridPeople = ps;
@@ -752,7 +756,7 @@ function fillGrid({ dir = 0 } = {}) {
       const d = first + wd;
       if (d < 0 || d >= C.daysOf(session)) { cells.push(h('span', { class: 'cell out', 'aria-hidden': 'true' })); continue; }
       const i = d * hours + k;
-      const past = d < today;
+      const past = isPast(d, k);
       const mine = !!C.getBit(ctx.slots, i);
       const full = isFullAt(d, k);
       let cls = avail0(ps, i) ? 'cell filled' : 'cell';
