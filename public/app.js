@@ -280,7 +280,7 @@ async function renderHome() {
           h('div', { class: 'range', role: 'group', 'aria-label': 'Horas' }, from, h('span', { class: 'muted', text: 'a' }), to))),
       err,
       h('button', { type: 'submit', class: 'btn primary wide' }, 'Crear quedada')),
-    joinBox(iosApp && !sessions.length)));
+    standalone() ? joinBox(iosApp && !sessions.length) : null));
   setN(n);
   fillHomeBest(sessions).catch((e) => console.error(e));
 }
