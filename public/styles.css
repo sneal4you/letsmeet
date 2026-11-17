@@ -535,14 +535,15 @@ button.chip:active { transform: scale(0.96); }
 /* inicio: mejores horas de cada quedada; brillo dorado si coincidís todos */
 .list-best { display: flex; flex-direction: column; gap: 1px; font-variant-numeric: tabular-nums; }
 .list-best:empty { display: none; }
-.link-row.full {
-  background: linear-gradient(135deg, rgba(255, 236, 160, 0.55), rgba(255, 210, 80, 0.35));
-  box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 16px 2px var(--gold-glow);
-  border-radius: inherit;
-}
+.link-row.mine { box-shadow: inset 0 0 0 1.5px var(--c); border-radius: inherit; }
+.link-row.mine.full { animation: agreed 1.6s ease-in-out infinite; }
 .link-row.full .list-sub { color: var(--label); }
-@media (prefers-color-scheme: dark) {
-  .link-row.full { background: linear-gradient(135deg, rgba(255, 214, 10, 0.2), rgba(255, 159, 10, 0.1)); }
+@keyframes agreed {
+  0%, 100% { box-shadow: inset 0 0 0 1.5px var(--c), 0 0 0 0 transparent; }
+  50% { box-shadow: inset 0 0 0 2.5px var(--c), 0 0 18px 3px var(--c); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .link-row.mine.full { animation: none; box-shadow: inset 0 0 0 2.5px var(--c), 0 0 14px 2px var(--c); }
 }
 /* inicio: unirse a una quedada pegando el enlace */
 .join-box { display: flex; flex-direction: column; gap: 12px; margin-top: -10px; }

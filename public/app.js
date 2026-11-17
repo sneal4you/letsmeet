@@ -291,12 +291,14 @@ async function fillHomeBest(sessions) {
     if (!out) continue;
     let blocks = [];
     let people = [];
+    let myColor = null;
     try {
       const dec = C.decodeLink(s.data);
       if (dec) {
         const session = dec.session;
         const eng = await new SyncEngine({ session, store, ...engineOpts }).init();
         const me = await store.get(meKey(s.id));
+        myColor = me?.color || null;
         const others = eng.people().filter((p) => !me || p.pid !== me.pid);
         const ps = others.map((p) => ({ pid: p.pid, slots: p.slots }));
         if (me?.name) { try { ps.push({ pid: me.pid, slots: C.slotsFromB64(session, me.slots) }); } catch { /* copia dañada */ } }
@@ -315,6 +317,7 @@ async function fillHomeBest(sessions) {
         ? [h('span', { class: 'list-sub best-who' }, ...people.map((p) => h('span', { class: `who ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.name)))]
         : [h('span', { class: 'list-sub', text: 'Aún nadie ha marcado' })]));
     rowEl.classList.toggle('full', full.length > 0);
+    if (myColor) rowEl.classList.add('mine', colorClass(myColor));
   }
 }
 
