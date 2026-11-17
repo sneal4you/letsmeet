@@ -736,7 +736,7 @@ function fillGrid({ dir = 0 } = {}) {
 
   // cabecera de días
   // flechas de semana a los dos lados, iguales; sin flecha si no hay semana antes o después
-  els.dayHead.replaceChildren(w > 0 ? els.prev : h('span'), ...Array.from({ length: 7 }, (_, wd) => {
+  els.dayHead.replaceChildren(w > 0 ? els.prev : h('a', { class: 'week-btn', href: '#', 'aria-label': 'Volver al inicio' }, icon('back')), ...Array.from({ length: 7 }, (_, wd) => {
     const day = first + wd;
     const date = C.addDays(session.startDate, day);
     const out = day < 0 || day >= C.daysOf(session);
