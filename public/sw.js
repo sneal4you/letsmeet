@@ -1,5 +1,5 @@
 // sw.js - caché versionada del shell. Nunca toca WebSockets (no pasan por fetch) ni otros orígenes.
-const VERSION = 'quedamos-6baf52276774';
+const VERSION = 'quedamos-399fd8c856be';
 const SHELL = [
   './', 'index.html', 'styles.css', 'app.js', 'core.js', 'crypto.js', 'sync.js', 'store.js',
   'vendor/noble-secp256k1.js', 'manifest.webmanifest',

@@ -588,8 +588,8 @@ function renderSession() {
     send: h('button', { type: 'button', class: 'icon-btn send-btn' }),
   };
   els.board = h('section', { class: 'board', 'aria-label': 'Rejilla de horas' },
-    els.dayHead,
-    h('div', { class: 'board-body' }, els.hours, els.cells, h('span')));
+    h('div', { class: 'board-body' }, els.hours, els.cells, h('span')),
+    els.dayHead);
   root.replaceChildren(h('main', { class: 'screen session' },
     h('nav', { class: 'navrow' },
       h('a', { class: 'icon-btn', href: '#', 'aria-label': 'Inicio' }, icon('back')),
