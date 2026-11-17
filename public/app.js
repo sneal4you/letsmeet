@@ -253,9 +253,15 @@ async function renderHome() {
   // al terminar de escribir el nombre, el cursor no se queda parpadeando
   name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
   name.addEventListener('change', () => name.blur());
+  // con nombre puesto y sin editar, queda fijo (como incrustado); al tocarlo se puede cambiar
+  let nameBox = null;
+  const setFixed = () => nameBox?.classList.toggle('set', document.activeElement !== name && C.validateName(name.value).ok);
+  name.addEventListener('blur', setFixed);
+  name.addEventListener('focus', setFixed);
   const drawPal = () => { nc.paint(color); palWrap.replaceChildren(palette({ selected: color, taken: new Map(), onPick: (c) => { color = c; nc.close(); drawPal(); saveProf(); } })); };
   drawPal();
   check.hidden = !C.validateName(name.value).ok;
+  queueMicrotask(setFixed);
 
   async function create(e) {
     e.preventDefault();
@@ -302,7 +308,7 @@ async function renderHome() {
   root.replaceChildren(h('main', { class: 'screen home' },
     h('header', { class: 'brand' }, brandMark(),
       h('h1', { class: 'large-title', text: "Let's Meet" }),
-      h('div', { class: 'home-name glass' }, nc.rows[0].children[0], nc.rows[0].children[1]),
+      nameBox = h('div', { class: 'home-name glass' }, nc.rows[0].children[0], nc.rows[0].children[1]),
       sessions.length ? h('button', { type: 'button', class: 'icon-btn home-account', 'aria-label': 'Copiar mi enlace personal (todas mis quedadas)', title: 'Mi enlace personal', onclick: copyAccountLink }, icon('clip')) : null),
     h('div', { class: 'group-body glass home-pal' }, palWrap),
     h('button', { type: 'button', class: 'btn primary wide open-create', onclick: () => openCreate(true) }, 'Crear quedada'),
