@@ -691,3 +691,14 @@ button.chip:active { transform: scale(0.96); }
 .screen.home .brand { gap: 6px; }
 /* al tocar una mejor hora: el resto del calendario se oscurece mientras parpadea */
 .cells.flashing .cell:not(.flash) { opacity: 0.18; transition: opacity 0.25s; }
+/* nombre del inicio: estrecho, color delante y check cuando hay nombre */
+.home-name { flex: 0 0 150px; padding: 0 12px 0 6px; gap: 6px; }
+.screen.home .brand .large-title { flex: 1 1 auto; }
+.name-check { display: grid; place-items: center; color: var(--ok); flex: none; }
+.name-check .ico { width: 16px; height: 16px; stroke-width: 2.8; }
+.name-check[hidden] { display: none; }
+.screen.home .brand .home-name { flex: 0 1 122px; min-width: 0; height: 38px; padding: 0 10px 0 5px; gap: 5px; }
+.screen.home .brand .home-name .color-toggle { width: 26px; height: 26px; box-shadow: none; border: 0; }
+.screen.home .brand .home-name .input { font-size: 14px; }
+.screen.home .brand .home-account { width: 38px; height: 38px; }
+.screen.home .brand .large-title { font-size: 22px; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }

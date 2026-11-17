@@ -231,7 +231,8 @@ async function renderHome() {
   const pending = new Set();
   for (const s of sessions) if ((await store.get(`out:${s.id}`)) || (await store.get(meKey(s.id)))?.dirty) pending.add(s.id);
   flushPending().catch((e) => console.error(e));
-  let n = 4; let color = 'blue';
+  const prof = (await store.get('profile')) || {};
+  let n = 4; let color = prof.color || 'blue';
   const title = h('input', { id: 'f-title', class: 'input bare', maxlength: C.TITLE_MAX, placeholder: 'Trabajo de grupo, reunión de equipo…', autocomplete: 'off', enterkeyhint: 'next', 'aria-label': 'Título' });
   const name = h('input', { id: 'f-name', class: 'input bare', maxlength: C.NAME_MAX, placeholder: 'Tu nombre', autocomplete: 'given-name', enterkeyhint: 'done', 'aria-label': 'Tu nombre' });
   const err = h('p', { class: 'form-error', role: 'alert' });
@@ -244,8 +245,14 @@ async function renderHome() {
   from.value = '8'; to.value = '22';
   const palWrap = h('div', { class: 'row-block' });
   const nc = nameColor(name, palWrap);
-  const drawPal = () => { nc.paint(color); palWrap.replaceChildren(palette({ selected: color, taken: new Map(), onPick: (c) => { color = c; nc.close(); drawPal(); } })); };
+  if (prof.name) name.value = prof.name;
+  // nombre y color se recuerdan; con un nombre válido aparece el check
+  const check = h('span', { class: 'name-check', 'aria-hidden': 'true' }, icon('check'));
+  const saveProf = () => { const ok = C.validateName(name.value).ok; check.hidden = !ok; store.set('profile', { name: ok ? C.cleanName(name.value) : '', color }).catch(() => {}); };
+  name.addEventListener('input', saveProf);
+  const drawPal = () => { nc.paint(color); palWrap.replaceChildren(palette({ selected: color, taken: new Map(), onPick: (c) => { color = c; nc.close(); drawPal(); saveProf(); } })); };
   drawPal();
+  check.hidden = !C.validateName(name.value).ok;
 
   async function create(e) {
     e.preventDefault();
@@ -279,7 +286,7 @@ async function renderHome() {
   root.replaceChildren(h('main', { class: 'screen home' },
     h('header', { class: 'brand' }, brandMark(),
       h('h1', { class: 'large-title', text: "Let's Meet" }),
-      h('div', { class: 'home-name glass' }, nc.rows[0].children[0], nc.rows[0].children[1]),
+      h('div', { class: 'home-name glass' }, nc.rows[0].children[1], nc.rows[0].children[0], check),
       sessions.length ? h('button', { type: 'button', class: 'icon-btn home-account', 'aria-label': 'Copiar mi enlace personal (todas mis quedadas)', title: 'Mi enlace personal', onclick: copyAccountLink }, icon('clip')) : null),
     h('div', { class: 'group-body glass home-pal' }, palWrap),
     memoryBanner(),
