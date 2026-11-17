@@ -317,7 +317,7 @@ async function fillHomeBest(sessions) {
     } catch (e) { console.error(e); }
     if (!out.isConnected) return; // se ha salido del inicio
     const full = blocks.filter((b) => b.full);
-    const chips = () => h('span', { class: 'chips home-chips' }, ...people.map((p) => h('span', { class: `chip ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.me ? `${p.name} (tú)` : p.name)),
+    const chips = () => h('span', { class: 'chips home-chips' }, ...people.map((p) => h('span', { class: `chip ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.name)),
       ...Array.from({ length: Math.max(0, total - people.length) }, () => h('span', { class: 'chip pending', text: 'Pendiente' })));
     out.replaceChildren(...(full.length
       ? [h('span', { class: 'list-sub list-ok', text: full.length > 1 ? '¡Hay varias horas disponibles!' : '¡Hay una hora disponible!' }), ...full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayLong(b.date)}, ${C.formatTime(b.startH)} a ${C.formatTime(b.endH)}` })), chips()]
@@ -558,7 +558,7 @@ function sessionSummary(s) {
   return `${C.formatDayShort(s.startDate)} – ${C.formatDayShort(C.addDays(s.startDate, C.daysOf(s) - 1))}, de ${C.formatHour(s.startH)} a ${C.formatHour(s.endH)}`;
 }
 function chip(p, { extra = '', onclick = null, pressed = null } = {}) {
-  const kids = [h('span', { class: 'chip-dot', 'aria-hidden': 'true' }), h('span', { class: 'chip-name', text: p.me ? `${p.name} (tú)` : p.name })];
+  const kids = [h('span', { class: 'chip-dot', 'aria-hidden': 'true' }), h('span', { class: 'chip-name', text: p.name })];
   if (!onclick) return h('span', { class: `chip ${colorClass(p.color)} ${extra}` }, kids);
   return h('button', { type: 'button', class: `chip ${colorClass(p.color)} ${extra}`, 'aria-pressed': String(!!pressed), onclick }, kids);
 }

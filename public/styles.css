@@ -630,3 +630,9 @@ button.chip:active { transform: scale(0.96); }
 .screen.session > .best .best-list li { flex: 0 0 auto; width: auto; }
 .screen.session > .best .best-item { padding: 3px 10px; }
 .screen.session > .best .best-when { font-size: 12px; }
+/* casillas redondeadas, cada una independiente */
+.cell, .cell.h1, .cell.h2 { border-radius: 999px; }
+.cell { box-shadow: inset 0 0 0 0.5px var(--cell-rim), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.cell.filled { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 3px rgba(0, 0, 0, 0.25); }
+.screen.session { --gap: 4px; }
+.cell.filled.full { box-shadow: 0 0 0 1.5px var(--gold); }
