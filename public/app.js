@@ -565,18 +565,12 @@ function fillPeople() {
       onclick: () => { ctx.focus = ctx.focus === p.pid ? null : p.pid; vibrate(6); fillPeople(); fillGrid(); },
     })),
     ...Array.from({ length: pend }, () => h('span', { class: 'chip pending', text: 'Pendiente' })));
-  const alone = ps.length <= 1;
   // Dos personas que se unieron a la vez pueden haber elegido el mismo nombre o color: avisar.
   const low = (s) => C.cleanName(s).toLocaleLowerCase('es');
   const others = ps.filter((p) => !p.me);
   const sameName = ctx.me && others.some((p) => low(p.name) === low(ctx.me.name));
   const sameColor = ctx.me && others.some((p) => p.color === ctx.me.color);
-  if (alone) {
-    els.hint.replaceChildren(h('div', { class: 'hint glass' },
-      h('div', { class: 'hint-text' }, h('strong', { text: 'Pasa el enlace al grupo' }),
-        h('span', { class: 'muted small', text: 'Cada persona lo abre una vez, marca sus horas y pulsa Enviar.' })),
-      h('button', { type: 'button', class: 'btn primary small-btn', onclick: invite }, icon('share'), 'Invitar')));
-  } else if (sameName || sameColor) {
+  if (sameName || sameColor) {
     els.hint.replaceChildren(h('div', { class: 'hint glass' },
       h('div', { class: 'hint-text' }, h('span', { class: 'small', text: `Otra persona usa tu mismo ${sameName ? (sameColor ? 'nombre y color' : 'nombre') : 'color'}. Cámbialo para que os distingan.` })),
       h('button', { type: 'button', class: 'btn tinted small-btn', onclick: renderSettings }, 'Cambiar')));
