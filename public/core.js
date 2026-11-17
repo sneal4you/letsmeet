@@ -4,7 +4,14 @@ export const FORMAT_VERSION = 1; // versión del enlace
 // Versión del horario enviado: 1 = una casilla por hora (antiguo), 2 = una por media hora.
 export const PAYLOAD_VERSION = 2;
 export const SLOTS_PER_HOUR = 2;
-export const DAYS = 30;
+/** Días de una quedada: del día de inicio al mismo día del mes siguiente, ambos incluidos (29 a 32). */
+export function daysOf(session) {
+  const { y, m, d } = dateParts(session.startDate);
+  const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+  const last = new Date(Date.UTC(ny, nm, 0)).getUTCDate();
+  const end = `${ny}-${String(nm).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
+  return diffDays(session.startDate, end) + 1;
+}
 export const MIN_PEOPLE = 2;
 export const MAX_PEOPLE = 20;
 export const NAME_MAX = 24;
@@ -108,11 +115,11 @@ export function formatHour(h) { return `${pad2(h)}:00`; }
 /** Hora con medias (10.5 -> "10:30"), sin cero delante. */
 export function formatTime(h) { const m = Math.round((h % 1) * 60); return `${Math.floor(h)}:${pad2(m)}`; }
 
-// ---------- slots (bitmap de DAYS × medias horas del rango) ----------
+// ---------- slots (bitmap de días × medias horas del rango) ----------
 export function hoursOf(session) { return session.endH - session.startH; }
 /** Casillas (medias horas) por día. */
 export function slotsPerDay(session) { return hoursOf(session) * SLOTS_PER_HOUR; }
-export function slotCount(session) { return DAYS * slotsPerDay(session); }
+export function slotCount(session) { return daysOf(session) * slotsPerDay(session); }
 export function slotBytes(session) { return Math.ceil(slotCount(session) / 8); }
 /** half: 0 = en punto, 1 = y media. */
 export function slotIndex(session, day, hour, half = 0) { return day * slotsPerDay(session) + (hour - session.startH) * SLOTS_PER_HOUR + half; }
@@ -123,11 +130,12 @@ export function getBit(bits, i) { return (bits[i >> 3] >> (i & 7)) & 1; }
 export function setBit(bits, i, on) { if (on) bits[i >> 3] |= 1 << (i & 7); else bits[i >> 3] &= ~(1 << (i & 7)); }
 export function countBits(bits) { let c = 0; for (const b of bits) { let x = b; while (x) { c += x & 1; x >>= 1; } } return c; }
 export function slotsToB64(bits) { return bytesToB64u(bits); }
-function legacyBytes(session) { return Math.ceil(DAYS * hoursOf(session) / 8); }
+function legacyBytes(session, days = daysOf(session)) { return Math.ceil(days * hoursOf(session) / 8); }
+function padTo(bits, n) { const out = new Uint8Array(n); out.set(bits.subarray(0, n)); return out; }
 /** Convierte un bitmap antiguo (una casilla por hora) al actual: cada hora marca sus dos medias horas. */
 export function expandHourly(session, old) {
   const out = emptySlots(session);
-  const total = DAYS * hoursOf(session);
+  const total = daysOf(session) * hoursOf(session);
   for (let i = 0; i < total; i++) if (getBit(old, i)) for (let s = 0; s < SLOTS_PER_HOUR; s++) setBit(out, i * SLOTS_PER_HOUR + s, true);
   return out;
 }
@@ -136,8 +144,13 @@ export function expandHourly(session, old) {
  * del cambio) y lo convierte. legacy: true = exige el antiguo; false = exige el actual.
  */
 export function slotsFromB64(session, str, { legacy } = {}) {
-  const bits = b64uToBytes(str);
-  if (legacy !== false && bits.length === legacyBytes(session) && bits.length !== slotBytes(session)) return expandHourly(session, bits);
+  let bits = b64uToBytes(str);
+  // Horarios guardados con otra duración (antes eran 30 días fijos): se ajustan; los días que faltan quedan vacíos.
+  const n = slotBytes(session), spd = slotsPerDay(session);
+  if (legacy !== true && bits.length !== n) for (let d = 28; d <= 32; d++) if (bits.length === Math.ceil(d * spd / 8)) { bits = padTo(bits, n); break; }
+  if (legacy !== false && bits.length !== n) {
+    for (let d = 28; d <= 32; d++) if (bits.length === legacyBytes(session, d)) return expandHourly(session, padTo(bits, legacyBytes(session)));
+  }
   if (legacy === true || bits.length !== slotBytes(session)) throw new Error('longitud de slots incorrecta');
   const total = slotCount(session);
   // limpiar bits sobrantes del último byte
@@ -154,9 +167,9 @@ export function setDay(session, bits, day, on) {
   for (let i = day * h; i < (day + 1) * h; i++) setBit(bits, i, on);
 }
 // ---------- semanas (lunes a domingo) ----------
-// Los índices de día son relativos a startDate y pueden caer fuera de [0, DAYS) en la primera y la última semana.
-/** Nº de semanas L–D que tocan la ventana de DAYS días. */
-export function weekCount(session) { return Math.ceil((weekdayMon(session.startDate) + DAYS) / 7); }
+// Los índices de día son relativos a startDate y pueden caer fuera de [0, daysOf(session)) en la primera y la última semana.
+/** Nº de semanas L–D que tocan la ventana de la quedada. */
+export function weekCount(session) { return Math.ceil((weekdayMon(session.startDate) + daysOf(session)) / 7); }
 /** Índice (relativo a startDate) del lunes de la semana `w`; negativo si la semana empieza antes del inicio. */
 export function weekFirstDay(session, w) { return w * 7 - weekdayMon(session.startDate); }
 /** Semana que contiene el día `day` (acotada a las semanas de la ventana). */
@@ -175,11 +188,11 @@ export function repeatWeek(session, bits, w, fromDay = 0) {
   let changed = 0;
   for (let wd = 0; wd < 7; wd++) {
     const src = first + wd;
-    if (src < 0 || src >= DAYS) continue;
+    if (src < 0 || src >= daysOf(session)) continue;
     for (let o = 0; o < weekCount(session); o++) {
       if (o === w) continue;
       const dst = weekFirstDay(session, o) + wd;
-      if (dst < Math.max(0, fromDay) || dst >= DAYS) continue;
+      if (dst < Math.max(0, fromDay) || dst >= daysOf(session)) continue;
       for (let k = 0; k < h; k++) {
         const v = getBit(bits, src * h + k);
         if (getBit(bits, dst * h + k) !== v) { setBit(bits, dst * h + k, !!v); changed++; }
@@ -193,7 +206,7 @@ export function clearWeek(session, bits, w, fromDay = 0) {
   const h = slotsPerDay(session);
   const first = weekFirstDay(session, w);
   let changed = 0;
-  for (let d = Math.max(first, fromDay, 0); d < Math.min(first + 7, DAYS); d++) {
+  for (let d = Math.max(first, fromDay, 0); d < Math.min(first + 7, daysOf(session)); d++) {
     for (let i = d * h; i < (d + 1) * h; i++) if (getBit(bits, i)) { setBit(bits, i, false); changed++; }
   }
   return changed;
@@ -202,7 +215,7 @@ export function clearWeek(session, bits, w, fromDay = 0) {
 export function weekHasFull(session, counts, required, w, fromDay = 0) {
   const h = slotsPerDay(session);
   const first = weekFirstDay(session, w);
-  for (let d = Math.max(first, fromDay, 0); d < Math.min(first + 7, DAYS); d++) {
+  for (let d = Math.max(first, fromDay, 0); d < Math.min(first + 7, daysOf(session)); d++) {
     for (let i = d * h; i < (d + 1) * h; i++) if (isFull(counts[i], required)) return true;
   }
   return false;
@@ -310,7 +323,7 @@ export function bestBlocks(session, people, { fromDay = 0, fromHour = 0, limit =
   const required = requiredCount(session, people.length);
   const minCount = people.length >= 2 ? 2 : 1;
   const blocks = [];
-  for (let day = Math.max(0, fromDay); day < DAYS; day++) {
+  for (let day = Math.max(0, fromDay); day < daysOf(session); day++) {
     let cur = null;
     const close = () => { if (cur && cur.pids.length >= minCount) blocks.push(cur); cur = null; };
     for (let k = 0; k < h; k++) {

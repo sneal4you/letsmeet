@@ -308,7 +308,7 @@ async function fillHomeBest(sessions) {
         const today = C.todayIndex(session);
         const now = new Date();
         const fromHour = (Math.floor((now.getHours() * 60 + now.getMinutes()) / 30) + 1) / 2;
-        if (ps.length >= 2 && today < C.DAYS) blocks = C.bestBlocks(session, ps, { fromDay: Math.max(0, today), fromHour: today >= 0 ? fromHour : 0, limit: 50 }).filter((b) => b.full).slice(0, 2);
+        if (ps.length >= 2 && today < C.daysOf(session)) blocks = C.bestBlocks(session, ps, { fromDay: Math.max(0, today), fromHour: today >= 0 ? fromHour : 0, limit: 50 }).filter((b) => b.full).slice(0, 2);
       }
     } catch (e) { console.error(e); }
     if (!out.isConnected) return; // se ha salido del inicio
@@ -530,13 +530,11 @@ function renderJoin() {
 
   // Avisos para no confundir "he perdido mis datos": app de inicio en iPhone y navegadores dentro de otras apps.
   let note = null;
-  if (isIOS && standalone()) note = '¿Ya te uniste desde Safari? Esta app guarda sus datos aparte: abre allí Ajustes de la quedada, copia tu enlace personal y pégalo en el inicio de esta app.';
   // En iPhone, WhatsApp abre los enlaces en SFSafariViewController (datos aparte de Safari) sin rastro en el UA: aviso siempre.
-  else if (isIOS) note = "Guarda tu enlace personal (Ajustes > Copiar) por si abres Let's Meet en otro navegador o app.";
-  else if (inAppBrowser) note = 'Lo que marques se guarda en este navegador. Si luego lo abres en otro, copia antes tu enlace personal en Ajustes para seguir siendo tú.';
+  if (isIOS) note = "Guarda tu enlace personal (botón de la persona, arriba a la derecha) por si abres Let's Meet en otro navegador o app.";
+  else if (inAppBrowser) note = 'Lo que marques se guarda en este navegador. Si luego lo abres en otro, copia antes tu enlace personal (botón de la persona) para seguir siendo tú.';
 
   root.replaceChildren(h('main', { class: 'screen join' },
-    h('nav', { class: 'navrow' }, h('a', { class: 'icon-btn', href: '#', 'aria-label': 'Inicio' }, icon('back'))),
     memoryBanner(),
     h('header', { class: 'join-head' }, brandMark(),
       h('p', { class: 'kicker', text: restored ? 'Recuperando tu identidad en' : 'Te han invitado a' }),
@@ -553,7 +551,7 @@ function renderJoin() {
 function fillJoinLive() { ctx.drawJoin?.(); }
 
 function sessionSummary(s) {
-  return `${C.formatDayShort(s.startDate)} – ${C.formatDayShort(C.addDays(s.startDate, C.DAYS - 1))}, de ${C.formatHour(s.startH)} a ${C.formatHour(s.endH)}`;
+  return `${C.formatDayShort(s.startDate)} – ${C.formatDayShort(C.addDays(s.startDate, C.daysOf(s) - 1))}, de ${C.formatHour(s.startH)} a ${C.formatHour(s.endH)}`;
 }
 function chip(p, { extra = '', onclick = null, pressed = null } = {}) {
   const kids = [h('span', { class: 'chip-dot', 'aria-hidden': 'true' }), h('span', { class: 'chip-name', text: p.me ? `${p.name} (tú)` : p.name })];
@@ -567,9 +565,10 @@ function renderSession() {
   ctx.view = 'session';
   const { session } = ctx;
   const today = C.todayIndex(session);
-  if (ctx.week == null) ctx.week = C.weekOfDay(session, Math.max(0, Math.min(today, C.DAYS - 1)));
+  if (ctx.week == null) ctx.week = C.weekOfDay(session, Math.max(0, Math.min(today, C.daysOf(session) - 1)));
   const els = ctx.els = {
     progress: h('span', { class: 'progress' }),
+    month: h('span', { class: 'month' }),
     conn: h('span', { class: 'conn', role: 'status' }),
     chips: h('div', { class: 'chips legend', role: 'group', 'aria-label': 'Participantes. Toca a alguien para resaltar sus horas.' }),
     hint: h('div', { class: 'hint-wrap' }),
@@ -596,12 +595,12 @@ function renderSession() {
       h('button', { type: 'button', class: 'icon-btn danger', 'aria-label': 'Salir de la quedada', title: 'Salir de la quedada', onclick: leave }, icon('trash'))),
     h('header', { class: 'session-head' },
       h('h1', { class: 'large-title', text: session.title }),
-      h('p', { class: 'session-meta' }, els.progress)),
+      h('p', { class: 'session-meta' }, els.progress, els.month)),
     memoryBanner(),
-    els.chips,
     els.hint,
     els.best,
-    els.board),
+    els.board,
+    els.chips),
   // fuera de .screen: su animación de entrada (transform) haría que position: fixed se refiriese a ella
   h('div', { class: 'sendbar glass' }, els.status, els.send));
   bindGrid(els.cells);
@@ -719,25 +718,31 @@ function fillGrid({ dir = 0 } = {}) {
   els.dayHead.replaceChildren(els.prev, ...Array.from({ length: 7 }, (_, wd) => {
     const day = first + wd;
     const date = C.addDays(session.startDate, day);
-    const out = day < 0 || day >= C.DAYS;
+    const out = day < 0 || day >= C.daysOf(session);
     return h('span', { class: `dh${day === today ? ' today' : ''}${day < today || out ? ' past' : ''}`, 'aria-label': C.formatDayLong(date) },
       h('span', { class: 'dh-w', text: C.WEEKDAYS_SHORT[wd] }), h('span', { class: 'dh-n', text: String(C.dateParts(date).d) }));
   }), els.next);
 
-  // columna de horas
-  els.hours.replaceChildren(...Array.from({ length: C.hoursOf(session) }, (_, k) => h('span', { class: 'hl', text: C.formatTime(session.startH + k) })));
+  // mes de la semana visible
+  const ma = C.dateParts(C.addDays(session.startDate, Math.max(first, 0))).m;
+  const mb = C.dateParts(C.addDays(session.startDate, Math.min(first + 6, C.daysOf(session) - 1))).m;
+  const cap = (x) => x[0].toUpperCase() + x.slice(1);
+  els.month.textContent = ma === mb ? cap(C.MONTHS_LONG[ma - 1]) : `${cap(C.MONTHS_LONG[ma - 1])} – ${C.MONTHS_LONG[mb - 1]}`;
+
+  // columna de horas: una etiqueta por media hora, centrada en su fila
+  els.hours.replaceChildren(...Array.from({ length: hours }, (_, k) => h('span', { class: 'hl', text: C.formatTime(C.slotHour(session, k)) })));
 
   // celdas
-  const isFullAt = (d, k) => d >= 0 && d < C.DAYS && k >= 0 && k < hours && d >= today && C.isFull(counts[d * hours + k], required);
+  const isFullAt = (d, k) => d >= 0 && d < C.daysOf(session) && k >= 0 && k < hours && d >= today && C.isFull(counts[d * hours + k], required);
   const focusP = ctx.focus ? ps.find((p) => p.pid === ctx.focus) : null;
   const cells = [];
   ctx.gridPeople = ps;
-  els.board.style.setProperty('--rows', C.hoursOf(session));
+  els.board.style.setProperty('--rows', hours);
   els.cells.className = `cells ${colorClass(ctx.me.color)}${focusP ? ' focusing' : ''}`;
   for (let k = 0; k < hours; k++) {
     for (let wd = 0; wd < 7; wd++) {
       const d = first + wd;
-      if (d < 0 || d >= C.DAYS) { cells.push(h('span', { class: 'cell out', 'aria-hidden': 'true' })); continue; }
+      if (d < 0 || d >= C.daysOf(session)) { cells.push(h('span', { class: 'cell out', 'aria-hidden': 'true' })); continue; }
       const i = d * hours + k;
       const past = d < today;
       const mine = !!C.getBit(ctx.slots, i);
@@ -769,7 +774,7 @@ function fillGrid({ dir = 0 } = {}) {
       el.classList.add(dir > 0 ? 'slide-l' : 'slide-r');
     }
   }
-  if (today >= C.DAYS && !els.board.querySelector('.ended')) els.board.prepend(h('p', { class: 'banner ended', text: 'Esta quedada ya ha pasado. Puedes crear otra desde el inicio.' }));
+  if (today >= C.daysOf(session) && !els.board.querySelector('.ended')) els.board.prepend(h('p', { class: 'banner ended', text: 'Esta quedada ya ha pasado. Puedes crear otra desde el inicio.' }));
 }
 
 // Marcar: tocar alterna una celda; mantener y arrastrar pinta un rectángulo (como When2meet):

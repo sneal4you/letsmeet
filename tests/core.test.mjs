@@ -28,8 +28,8 @@ test('fechas: suma, diferencia, día de la semana y meses', () => {
 test('slots: índices, bitmap y base64url ida y vuelta', () => {
   assert.equal(C.hoursOf(S), 13);
   assert.equal(C.slotsPerDay(S), 26);
-  assert.equal(C.slotCount(S), 780);
-  assert.equal(C.slotBytes(S), 98);
+  assert.equal(C.slotCount(S), 806);
+  assert.equal(C.slotBytes(S), 101);
   const b = C.emptySlots(S);
   C.setBit(b, C.slotIndex(S, 0, 9), true);
   C.setBit(b, C.slotIndex(S, 29, 21, 1), true);
@@ -47,7 +47,7 @@ test('slots: índices, bitmap y base64url ida y vuelta', () => {
 });
 
 test('semanas L-D: páginas, repetir y borrar semana', () => {
-  // 16-11-2026 es lunes: 30 días = 4 semanas completas + 2 días (lun 14 y mar 15 dic)
+  // 16-11-2026 es lunes: del 16-11 al 16-12 = 31 días = 4 semanas completas + 3 días (lun 14 a mié 16 dic)
   assert.equal(C.weekCount(S), 5);
   assert.equal(C.weekFirstDay(S, 0), 0);
   assert.equal(C.weekFirstDay(S, 4), 28);
@@ -63,11 +63,11 @@ test('semanas L-D: páginas, repetir y borrar semana', () => {
   on(b, 9, 18, 19); // miércoles de la semana 1
   on(b, 2, 10); // miércoles de la semana 0, ya pasado si fromDay = 3
   const changed = C.repeatWeek(S, b, 1, 3);
-  // se copia a los miércoles 16 y 23; el 2 es pasado y no se toca
-  for (const d of [16, 23]) { assert.ok(C.getBit(b, C.slotIndex(S, d, 18))); assert.ok(C.getBit(b, C.slotIndex(S, d, 19))); }
+  // se copia a los miércoles 16, 23 y 30; el 2 es pasado y no se toca
+  for (const d of [16, 23, 30]) { assert.ok(C.getBit(b, C.slotIndex(S, d, 18))); assert.ok(C.getBit(b, C.slotIndex(S, d, 19))); }
   assert.ok(!C.getBit(b, C.slotIndex(S, 1, 18)));
   assert.ok(C.getBit(b, C.slotIndex(S, 2, 10)), 'día pasado intacto');
-  assert.equal(changed, 8);
+  assert.equal(changed, 12);
   assert.equal(C.clearWeek(S, b, 2), 4);
   assert.ok(!C.getBit(b, C.slotIndex(S, 16, 18)));
   assert.equal(C.clearWeek(S, b, 0, 3), 0); // el día 2 es pasado: no se borra
@@ -173,7 +173,7 @@ test('medias horas: bloques con :30, formato y coincidencia por media hora', () 
 });
 
 test('formato antiguo por horas: se convierte duplicando cada hora', () => {
-  const old = new Uint8Array(Math.ceil(C.DAYS * C.hoursOf(S) / 8));
+  const old = new Uint8Array(Math.ceil(C.daysOf(S) * C.hoursOf(S) / 8));
   C.setBit(old, 2 * 13 + 1, true); // día 2, 10:00 en el formato por horas
   const b64 = C.slotsToB64(old);
   const bits = C.slotsFromB64(S, b64); // copia local antigua: se acepta y convierte
@@ -187,4 +187,15 @@ test('formato antiguo por horas: se convierte duplicando cada hora', () => {
   assert.equal(C.validatePayload({ ...base, v: 1, slots: C.slotsToB64(C.emptySlots(S)) }, S), null);
   assert.equal(C.validatePayload({ ...base, v: 2, slots: b64 }, S), null);
   assert.equal(C.validatePayload({ ...base, v: 3, slots: C.slotsToB64(C.emptySlots(S)) }, S), null);
+});
+
+test('duración: del día de inicio al mismo día del mes siguiente, ambos incluidos', () => {
+  assert.equal(C.daysOf({ startDate: '2026-11-17' }), 31); // 17 nov – 17 dic
+  assert.equal(C.daysOf({ startDate: '2026-12-17' }), 32); // 17 dic – 17 ene
+  assert.equal(C.daysOf({ startDate: '2027-02-17' }), 29); // 17 feb – 17 mar
+  assert.equal(C.daysOf({ startDate: '2027-01-31' }), 29); // 31 ene – 28 feb
+  // un horario guardado con 30 días se lee y el día que falta queda vacío
+  const old = new Uint8Array(Math.ceil(30 * C.slotsPerDay(S) / 8)); C.setBit(old, 5, true);
+  const bits = C.slotsFromB64(S, C.slotsToB64(old));
+  assert.equal(bits.length, C.slotBytes(S)); assert.equal(C.countBits(bits), 1);
 });
