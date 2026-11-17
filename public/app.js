@@ -730,9 +730,10 @@ function fillGrid({ dir = 0 } = {}) {
 
   // cabecera de días
   const mon = C.MONTHS_SHORT[C.dateParts(C.addDays(session.startDate, Math.max(first, 0))).m - 1].slice(0, 3).toUpperCase();
-  els.dayHead.replaceChildren(w > 0
-    ? h('span', { class: 'dh-month dh-month-nav' }, h('span', { text: mon }), h('button', { type: 'button', class: 'week-btn dh-back', 'aria-label': 'Semana anterior', onclick: () => setWeek(ctx.week - 1) }, icon('back')))
-    : h('span', { class: 'dh-month', text: mon }), ...Array.from({ length: 7 }, (_, wd) => {
+  // columna izquierda: el mes arriba (a la altura de los días de la semana) y debajo la flecha de semana anterior
+  els.dayHead.replaceChildren(h('span', { class: 'dh dh-month-col' },
+    h('span', { class: 'dh-w dh-mon', text: mon }),
+    w > 0 ? h('button', { type: 'button', class: 'week-btn dh-back', 'aria-label': 'Semana anterior', onclick: () => setWeek(ctx.week - 1) }, icon('back')) : h('span', { class: 'dh-back-gap' })), ...Array.from({ length: 7 }, (_, wd) => {
     const day = first + wd;
     const date = C.addDays(session.startDate, day);
     const out = day < 0 || day >= C.daysOf(session);
