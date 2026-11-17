@@ -318,7 +318,7 @@ async function fillHomeBest(sessions) {
     if (!out.isConnected) return; // se ha salido del inicio
     const full = blocks.filter((b) => b.full);
     out.replaceChildren(...(full.length
-      ? [h('span', { class: 'list-sub list-ok', text: '¡Hay hora disponible!' }), ...full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayLong(b.date)}, de ${C.formatTime(b.startH)} a ${C.formatTime(b.endH)}` }))]
+      ? [h('span', { class: 'list-sub list-ok', text: '¡Hay hora disponible!' }), ...full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayLong(b.date)}, ${C.formatTime(b.startH)} a ${C.formatTime(b.endH)}` }))]
       : people.length
         ? [h('span', { class: 'list-sub', text: 'Todavía no hay hora concretada' }),
             h('span', { class: 'chips home-chips' }, ...people.map((p) => h('span', { class: `chip ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.me ? `${p.name} (tú)` : p.name)),
