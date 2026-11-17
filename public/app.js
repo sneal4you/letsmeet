@@ -477,7 +477,6 @@ function onVisibility() {
   } else {
     clearTimeout(ctx.hideTimer);
     ctx.engine.resume();
-    if (ctx.view === 'session' && ctx.me?.dirty) toast('Tienes cambios sin enviar.', { label: 'Enviar', fn: sendNow });
     scheduleRender();
   }
 }
@@ -619,7 +618,6 @@ function renderSession() {
   els.dayHead.addEventListener('pointerdown', (e) => { sx = e.clientX; });
   els.dayHead.addEventListener('pointerup', (e) => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 40) setWeek(ctx.week + (dx < 0 ? 1 : -1)); });
   fillPeople(); fillGrid(); fillBest(); fillSendbar(); fillConn();
-  if (ctx.me.dirty) toast('Tienes cambios sin enviar.', { label: 'Enviar', fn: sendNow });
 }
 
 function fillPeople() {
