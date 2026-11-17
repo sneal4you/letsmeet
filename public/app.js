@@ -304,7 +304,7 @@ async function fillHomeBest(sessions) {
         const ps = others.map((p) => ({ pid: p.pid, slots: p.slots }));
         if (me?.name) { try { ps.push({ pid: me.pid, slots: C.slotsFromB64(session, me.slots) }); } catch { /* copia dañada */ } }
         total = session.n;
-        people = [...(me?.name ? [{ name: me.name, color: me.color }] : []), ...others.map((p) => ({ name: p.name, color: p.color }))];
+        people = [...(me?.name ? [{ name: me.name, color: me.color, me: true }] : []), ...others.map((p) => ({ name: p.name, color: p.color }))];
         const today = C.todayIndex(session);
         const now = new Date();
         const fromHour = (Math.floor((now.getHours() * 60 + now.getMinutes()) / 30) + 1) / 2;
@@ -316,9 +316,9 @@ async function fillHomeBest(sessions) {
     out.replaceChildren(...(full.length
       ? full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayShort(b.date)} · ${C.formatTime(b.startH)}–${C.formatTime(b.endH)} · Todos` }))
       : people.length
-        ? [h('span', { class: 'list-sub best-who' }, ...people.map((p) => h('span', { class: `who ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.name)),
-            ...Array.from({ length: Math.max(0, total - people.length) }, () => h('span', { class: 'mini-pending', text: 'Pendiente' })),
-            h('span', { class: 'list-count', text: `${people.length}/${Math.max(total, people.length)}` }))]
+        ? [h('span', { class: 'list-sub', text: `${people.length} de ${Math.max(total, people.length)} han enviado` }),
+            h('span', { class: 'chips home-chips' }, ...people.map((p) => h('span', { class: `chip ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.me ? `${p.name} (tú)` : p.name)),
+              ...Array.from({ length: Math.max(0, total - people.length) }, () => h('span', { class: 'chip pending', text: 'Pendiente' })))]
         : [h('span', { class: 'list-sub', text: 'Aún nadie ha marcado' })]));
     rowEl.classList.toggle('full', full.length > 0);
     if (myColor) rowEl.classList.add('mine', colorClass(myColor));
@@ -643,7 +643,7 @@ function renderSession() {
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Ajustes de la quedada', onclick: renderSettings }, icon('settings'))),
     h('header', { class: 'session-head' },
       h('h1', { class: 'large-title', text: session.title }),
-      h('p', { class: 'session-meta' }, els.progress, els.conn)),
+      h('p', { class: 'session-meta' }, els.progress)),
     memoryBanner(),
     els.chips,
     els.hint,

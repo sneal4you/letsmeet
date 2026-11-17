@@ -555,3 +555,5 @@ button.chip:active { transform: scale(0.96); }
 .list-best .best-who { gap: 5px; align-items: center; flex-wrap: wrap; white-space: normal; overflow: visible; }
 .list-best .who { display: inline-flex; align-items: center; gap: 5px; padding: 0 9px 0 7px; min-height: 22px; border-radius: 999px; background: var(--glass); border: 0.5px solid var(--rim); color: var(--label); font-size: 12px; }
 .list-best .mini-pending { min-height: 22px; padding: 0 9px; font-size: 12px; }
+
+.home-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
