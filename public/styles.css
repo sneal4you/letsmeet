@@ -551,3 +551,7 @@ button.chip:active { transform: scale(0.96); }
 /* inicio: huecos pendientes y recuento en la tarjeta de la quedada */
 .mini-pending { display: inline-flex; align-items: center; padding: 0 7px; border: 1px dashed var(--label-3); border-radius: 999px; color: var(--label-3); font-size: 11px; line-height: 16px; }
 .list-count { margin-left: auto; color: var(--label-2); font-variant-numeric: tabular-nums; font-weight: 600; }
+/* inicio: cada participante en su casilla, como los chips de la quedada pero más pequeños */
+.list-best .best-who { gap: 5px; align-items: center; flex-wrap: wrap; white-space: normal; overflow: visible; }
+.list-best .who { display: inline-flex; align-items: center; gap: 5px; padding: 0 9px 0 7px; min-height: 22px; border-radius: 999px; background: var(--glass); border: 0.5px solid var(--rim); color: var(--label); font-size: 12px; }
+.list-best .mini-pending { min-height: 22px; padding: 0 9px; font-size: 12px; }
