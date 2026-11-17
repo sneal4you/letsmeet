@@ -263,7 +263,7 @@ async function renderHome() {
   }
 
   const list = sessions.length
-    ? group('Tus quedadas', sessions.map((s) => h('div', { class: 'row link-row', 'data-sid': s.id },
+    ? group(null, sessions.map((s) => h('div', { class: 'row link-row', 'data-sid': s.id },
       h('a', { class: 'list-main', href: '#' + s.data },
         h('span', { class: 'list-title', text: s.title }),
         h('span', { class: 'list-best' }),
@@ -279,11 +279,12 @@ async function renderHome() {
   root.replaceChildren(h('main', { class: 'screen home' },
     h('header', { class: 'brand' }, brandMark(),
       h('h1', { class: 'large-title', text: "Let's Meet" }),
+      h('div', { class: 'home-name glass' }, nc.rows[0].children[0], nc.rows[0].children[1]),
       sessions.length ? h('button', { type: 'button', class: 'icon-btn home-account', 'aria-label': 'Copiar mi enlace personal (todas mis quedadas)', title: 'Mi enlace personal', onclick: copyAccountLink }, icon('clip')) : null),
+    h('div', { class: 'group-body glass home-pal' }, palWrap),
     memoryBanner(),
     list,
     h('form', { class: 'create', onsubmit: create, novalidate: true },
-      group('Nombre', nc.rows),
       group('Nueva quedada',
         row(null, title),
         h('div', { class: 'row compact-row' },
@@ -914,8 +915,12 @@ function flashBlock(b) {
   const r = targets[0].getBoundingClientRect(); const r2 = targets[targets.length - 1].getBoundingClientRect();
   const mid = (r.top + r2.bottom) / 2 + window.scrollY - window.innerHeight / 2;
   window.scrollTo({ top: Math.max(0, mid), behavior: reduceMotion() ? 'auto' : 'smooth' });
+  // el resto del calendario se oscurece mientras parpadea el bloque
+  const cellsEl = ctx.els.cells;
+  cellsEl.classList.add('flashing');
   for (const el of targets) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
-  setTimeout(() => targets.forEach((el) => el.classList.remove('flash')), 2200);
+  clearTimeout(flashBlock.t);
+  flashBlock.t = setTimeout(() => { targets.forEach((el) => el.classList.remove('flash')); cellsEl.classList.remove('flashing'); }, 2200);
 }
 
 function fillBest() {
