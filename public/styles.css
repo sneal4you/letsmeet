@@ -727,3 +727,4 @@ button.chip:active { transform: scale(0.96); }
 /* cursor del texto también con el color elegido */
 input, textarea { caret-color: var(--accent); }
 .dh.today .dh-n { color: var(--accent-ink, #fff); }
+.invite-btn[hidden] { display: none; }

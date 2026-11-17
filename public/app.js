@@ -305,7 +305,7 @@ async function renderHome() {
         h('span', { class: 'list-title', text: s.title }),
         h('span', { class: 'list-best' }),
         pending.has(s.id) ? h('span', { class: 'list-sub warn', 'data-pending': s.id, text: 'Cambios sin enviar' }) : null),
-      h('button', { type: 'button', class: 'icon-btn subtle', 'aria-label': `Invitar a «${s.title}»`, title: 'Enlace de invitación', onclick: () => { const d = C.decodeLink(s.data); if (d) invite(d.session); } }, icon('mail')),
+      h('button', { type: 'button', class: 'icon-btn subtle invite-btn', 'aria-label': `Invitar a «${s.title}»`, title: 'Enlace de invitación', onclick: () => { const d = C.decodeLink(s.data); if (d) invite(d.session); } }, icon('mail')),
       h('button', {
         type: 'button', class: 'icon-btn subtle', 'aria-label': `Quitar «${s.title}» de este móvil`,
         onclick: async () => { if (!confirm(`¿Quitar «${s.title}»? Saldrás de la quedada y se borrarán tus horas para todos.`)) return; await removeSession(s.id); renderHome(); },
@@ -380,6 +380,8 @@ async function fillHomeBest(sessions) {
         ? [h('span', { class: 'list-sub', text: 'Todavía no hay hora concretada' }), chips()]
         : [h('span', { class: 'list-sub', text: 'Aún nadie ha marcado' })]));
     rowEl.classList.toggle('full', full.length > 0);
+    // grupo completo: ya no hace falta invitar
+    const inv = rowEl.querySelector('.invite-btn'); if (inv) inv.hidden = total > 0 && people.length >= total;
     if (myColor) rowEl.classList.add('mine', colorClass(myColor));
   }
 }
