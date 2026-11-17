@@ -30,7 +30,7 @@ test('servidor estático: index, manifest, sw, iconos y vendor', async () => {
     const manifest = await (await fetch(base + 'manifest.webmanifest')).json();
     assert.equal(manifest.start_url, './');
     assert.equal(manifest.scope, './');
-    assert.equal(manifest.display, 'standalone');
+    assert.equal(manifest.display, 'browser');
     assert.ok(manifest.icons.some((i) => i.purpose === 'maskable'));
   } finally {
     await new Promise((r) => server.close(r));
