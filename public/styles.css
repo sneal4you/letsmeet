@@ -619,3 +619,8 @@ button.chip:active { transform: scale(0.96); }
 .home-chips .chip.pending { padding: 0 9px; }
 .home-chips .chip-dot { width: 8px; height: 8px; }
 .home-chips { gap: 4px; margin-top: 6px; }
+/* mejores fechas de la cabecera: en varias líneas, sin cortar */
+.nav-info .best-list { flex-wrap: wrap; overflow: visible; scroll-snap-type: none; }
+.nav-info .best-list li { flex: 0 0 auto; width: auto; }
+.dh-month { font-size: 12px; font-weight: 700; color: var(--label-2); text-align: center; letter-spacing: 0.04em; }
+.day-head { touch-action: pan-y; }

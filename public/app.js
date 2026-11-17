@@ -317,12 +317,12 @@ async function fillHomeBest(sessions) {
     } catch (e) { console.error(e); }
     if (!out.isConnected) return; // se ha salido del inicio
     const full = blocks.filter((b) => b.full);
+    const chips = () => h('span', { class: 'chips home-chips' }, ...people.map((p) => h('span', { class: `chip ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.me ? `${p.name} (tú)` : p.name)),
+      ...Array.from({ length: Math.max(0, total - people.length) }, () => h('span', { class: 'chip pending', text: 'Pendiente' })));
     out.replaceChildren(...(full.length
-      ? [h('span', { class: 'list-sub list-ok', text: full.length > 1 ? '¡Hay varias horas disponibles!' : '¡Hay una hora disponible!' }), ...full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayLong(b.date)}, ${C.formatTime(b.startH)} a ${C.formatTime(b.endH)}` }))]
+      ? [h('span', { class: 'list-sub list-ok', text: full.length > 1 ? '¡Hay varias horas disponibles!' : '¡Hay una hora disponible!' }), ...full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayLong(b.date)}, ${C.formatTime(b.startH)} a ${C.formatTime(b.endH)}` })), chips()]
       : people.length
-        ? [h('span', { class: 'list-sub', text: 'Todavía no hay hora concretada' }),
-            h('span', { class: 'chips home-chips' }, ...people.map((p) => h('span', { class: `chip ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.me ? `${p.name} (tú)` : p.name)),
-              ...Array.from({ length: Math.max(0, total - people.length) }, () => h('span', { class: 'chip pending', text: 'Pendiente' })))]
+        ? [h('span', { class: 'list-sub', text: 'Todavía no hay hora concretada' }), chips()]
         : [h('span', { class: 'list-sub', text: 'Aún nadie ha marcado' })]));
     rowEl.classList.toggle('full', full.length > 0);
     if (myColor) rowEl.classList.add('mine', colorClass(myColor));
@@ -603,6 +603,10 @@ function renderSession() {
     els.board,
     els.chips));
   bindGrid(els.cells);
+  // deslizar la cabecera de días a izquierda/derecha cambia de semana
+  let sx = null;
+  els.dayHead.addEventListener('pointerdown', (e) => { sx = e.clientX; });
+  els.dayHead.addEventListener('pointerup', (e) => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 40) setWeek(ctx.week + (dx < 0 ? 1 : -1)); });
   fillPeople(); fillGrid(); fillBest(); fillSendbar(); fillConn();
   if (ctx.me.dirty) toast('Tienes cambios sin enviar.', { label: 'Enviar', fn: sendNow });
 }
@@ -718,7 +722,8 @@ function fillGrid({ dir = 0 } = {}) {
   els.next.disabled = w >= nW - 1;
 
   // cabecera de días
-  els.dayHead.replaceChildren(els.prev, ...Array.from({ length: 7 }, (_, wd) => {
+  const mon = C.MONTHS_SHORT[C.dateParts(C.addDays(session.startDate, Math.max(first, 0))).m - 1].slice(0, 3).toUpperCase();
+  els.dayHead.replaceChildren(h('span', { class: 'dh-month', text: mon }), ...Array.from({ length: 7 }, (_, wd) => {
     const day = first + wd;
     const date = C.addDays(session.startDate, day);
     const out = day < 0 || day >= C.daysOf(session);
