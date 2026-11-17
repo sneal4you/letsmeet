@@ -268,18 +268,17 @@ async function renderHome() {
     h('header', { class: 'brand' }, brandMark(),
       h('h1', { class: 'large-title', text: "Let's Meet" })),
     memoryBanner(),
-    iosApp && !sessions.length ? pasteLinkCard(true) : null,
     list,
     h('form', { class: 'create', onsubmit: create, novalidate: true },
+      group('Tú', nc.rows),
       group('Nueva quedada',
         row(null, title),
         h('div', { class: 'row compact-row' },
           h('div', { class: 'stepper', role: 'group', 'aria-label': 'Personas, contándote a ti' }, minus, nOut, plus),
           h('div', { class: 'range', role: 'group', 'aria-label': 'Horas' }, from, h('span', { class: 'muted', text: 'a' }), to))),
-      group('Tú', nc.rows),
       err,
       h('button', { type: 'submit', class: 'btn primary wide' }, 'Crear quedada')),
-    standalone() && (sessions.length || !iosApp) ? pasteLinkCard(false) : null));
+    joinBox(iosApp && !sessions.length)));
   setN(n);
   fillHomeBest(sessions).catch((e) => console.error(e));
 }
@@ -313,23 +312,52 @@ async function fillHomeBest(sessions) {
   }
 }
 
+// "Unirse a una quedada": despliega el campo para pegar el enlace (en la app instalada no hay barra de direcciones).
+function joinBox(openNow) {
+  const card = pasteLinkCard(openNow);
+  const btn = h('button', { type: 'button', class: 'btn tinted wide join-toggle', 'aria-expanded': 'false', 'aria-controls': 'join-card' }, icon('link'), 'Unirse a una quedada');
+  card.id = 'join-card';
+  const set = (open) => {
+    card.hidden = !open; btn.setAttribute('aria-expanded', String(open));
+    if (open) { card.querySelector('input').focus({ preventScroll: true }); card.offerClipboard(); }
+  };
+  btn.onclick = () => set(card.hidden);
+  card.hidden = true;
+  if (openNow) { card.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
+  return h('div', { class: 'join-box' }, btn, card);
+}
+const linkFrag = (v) => { v = String(v || '').trim(); const i = v.indexOf('#'); return i >= 0 ? v.slice(i + 1) : v; };
+
 // En la app instalada no hay barra de direcciones (y en iPhone no comparte datos con Safari): pegar un enlace.
 function pasteLinkCard(first) {
   const input = h('input', { class: 'input bare', type: 'url', inputmode: 'url', placeholder: 'Pega aquí el enlace', autocomplete: 'off', 'aria-label': 'Enlace de una quedada' });
+  const err = h('p', { class: 'form-error', role: 'alert' });
+  const clip = h('div', { class: 'row-block', hidden: true });
   const open = (e) => {
     e.preventDefault();
-    const v = input.value.trim(); const i = v.indexOf('#');
-    const frag = i >= 0 ? v.slice(i + 1) : v;
-    if (!C.decodeLink(frag)) { toast('El enlace no es válido o está incompleto.'); input.focus(); return; }
+    const frag = linkFrag(input.value);
+    if (!input.value.trim()) { err.textContent = 'Pega aquí el enlace que te han pasado.'; input.focus(); return; }
+    if (!C.decodeLink(frag)) { err.textContent = 'Ese enlace no es de una quedada o está incompleto. Copia el enlace entero de la invitación.'; input.focus(); return; }
     location.hash = frag;
   };
+  input.addEventListener('input', () => { err.textContent = ''; });
   const note = first && isIOS
     ? 'En iPhone, esta app guarda sus datos aparte de Safari. Si ya marcaste horas en Safari, copia allí tu enlace personal (Ajustes de la quedada) y pégalo aquí: seguirás siendo tú.'
     : 'Pega el enlace del grupo o tu enlace personal.';
-  return h('form', { class: 'group', onsubmit: open, novalidate: true },
-    h('h2', { class: 'group-title', text: 'Abrir un enlace' }),
-    h('div', { class: 'group-body glass' }, row(null, input), h('div', { class: 'row-block' }, h('button', { type: 'submit', class: 'btn tinted wide' }, icon('link'), 'Abrir'))),
+  const form = h('form', { class: 'group', onsubmit: open, novalidate: true },
+    h('div', { class: 'group-body glass' }, clip, row(null, input), h('div', { class: 'row-block' }, h('button', { type: 'submit', class: 'btn primary wide' }, 'Unirse'))),
+    err,
     h('p', { class: 'group-foot', text: note }));
+  // Si el portapapeles ya tiene un enlace válido, ofrecer pegarlo (si el navegador deja leerlo).
+  form.offerClipboard = async () => {
+    try {
+      const t = await navigator.clipboard?.readText?.();
+      if (!t || !C.decodeLink(linkFrag(t)) || input.value.trim()) return;
+      clip.hidden = false;
+      clip.replaceChildren(h('button', { type: 'button', class: 'btn tinted wide', onclick: () => { input.value = t.trim(); err.textContent = ''; clip.hidden = true; } }, 'Pegar el enlace copiado'));
+    } catch { /* sin permiso: se pega a mano */ }
+  };
+  return form;
 }
 
 // ---------- paleta ----------

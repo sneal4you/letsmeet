@@ -544,3 +544,5 @@ button.chip:active { transform: scale(0.96); }
 @media (prefers-color-scheme: dark) {
   .link-row.full { background: linear-gradient(135deg, rgba(255, 214, 10, 0.2), rgba(255, 159, 10, 0.1)); }
 }
+/* inicio: unirse a una quedada pegando el enlace */
+.join-box { display: flex; flex-direction: column; gap: 12px; margin-top: -10px; }
