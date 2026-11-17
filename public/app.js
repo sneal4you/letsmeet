@@ -552,7 +552,13 @@ function renderJoin() {
     const taken = takenColors(ctx.me?.pid);
     if (!picked) color = firstFree(taken, color);
     nc.paint(color);
-    palWrap.replaceChildren(palette({ selected: color, taken, onPick: (c) => { color = c; picked = true; nc.close(); ctx.drawJoin(); } }));
+    // sin paleta: cada toque en el círculo pasa al siguiente color libre
+    nc.rows[0].lastChild.onclick = () => {
+      const ids = C.COLORS.map((x) => x.id);
+      const tk = takenColors(ctx.me?.pid);
+      for (let i = 1; i <= ids.length; i++) { const c = ids[(ids.indexOf(color) + i) % ids.length]; if (!tk.has(c)) { color = c; break; } }
+      picked = true; vibrate(6); ctx.drawJoin();
+    };
     const ps = ctx.engine.people().filter((p) => p.pid !== ctx.me?.pid);
     let empty = 'Todavía nadie ha enviado su horario.';
     if (!ctx.engine.synced) {
@@ -585,8 +591,8 @@ function renderJoin() {
   // Avisos para no confundir "he perdido mis datos": app de inicio en iPhone y navegadores dentro de otras apps.
   let note = null;
   // En iPhone, WhatsApp abre los enlaces en SFSafariViewController (datos aparte de Safari) sin rastro en el UA: aviso siempre.
-  if (isIOS) note = "Guarda tu enlace personal (botón de la persona, arriba a la derecha del inicio) por si abres Let's Meet en otro navegador o app.";
-  else if (inAppBrowser) note = 'Lo que marques se guarda en este navegador. Si luego lo abres en otro, copia antes tu enlace personal (botón de la persona) para seguir siendo tú.';
+  if (isIOS) note = "Guarda tu enlace personal (el clip, arriba a la derecha del inicio) por si abres Let's Meet en otro navegador o app.";
+  else if (inAppBrowser) note = 'Lo que marques se guarda en este navegador. Si luego lo abres en otro, copia antes tu enlace personal (el clip del inicio) para seguir siendo tú.';
 
   root.replaceChildren(h('main', { class: 'screen join' },
     memoryBanner(),
@@ -1004,7 +1010,13 @@ function renderSettings() {
   const err = h('p', { class: 'form-error', role: 'alert' });
   const palWrap = h('div', { class: 'row-block' });
   const nc = nameColor(name, palWrap);
-  const draw = () => { nc.paint(color); palWrap.replaceChildren(palette({ selected: color, taken: takenColors(me.pid), onPick: (c) => { color = c; nc.close(); draw(); } })); };
+  const draw = () => nc.paint(color);
+  // cada toque en el círculo pasa al siguiente color libre
+  nc.rows[0].lastChild.onclick = () => {
+    const ids = C.COLORS.map((x) => x.id); const tk = takenColors(me.pid);
+    for (let i = 1; i <= ids.length; i++) { const c = ids[(ids.indexOf(color) + i) % ids.length]; if (!tk.has(c)) { color = c; break; } }
+    vibrate(6); draw();
+  };
   draw();
   const back = () => renderSession();
   const save = (e) => {
