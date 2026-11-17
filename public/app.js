@@ -260,6 +260,12 @@ async function renderHome() {
   name.addEventListener('focus', setFixed);
   const drawPal = () => { nc.paint(color); palWrap.replaceChildren(palette({ selected: color, taken: new Map(), onPick: (c) => { color = c; nc.close(); drawPal(); saveProf(); } })); };
   drawPal();
+  // en el inicio, cada toque en el círculo pasa al color siguiente (sin paleta)
+  nc.rows[0].children[1].onclick = () => {
+    const ids = C.COLORS.map((x) => x.id);
+    color = ids[(ids.indexOf(color) + 1) % ids.length];
+    vibrate(6); drawPal(); saveProf();
+  };
   check.hidden = !C.validateName(name.value).ok;
   queueMicrotask(setFixed);
 
@@ -317,7 +323,6 @@ async function renderHome() {
       h('h1', { class: 'large-title', text: "Let's Meet" }),
       nameBox = h('div', { class: 'home-name glass' }, nc.rows[0].children[0], nc.rows[0].children[1]),
       sessions.length ? h('button', { type: 'button', class: 'icon-btn home-account', 'aria-label': 'Copiar mi enlace personal (todas mis quedadas)', title: 'Mi enlace personal', onclick: copyAccountLink }, icon('clip')) : null),
-    h('div', { class: 'group-body glass home-pal' }, palWrap),
     openBtn,
     // se despliega debajo del botón: título, personas y horas; el check de abajo a la derecha la crea
     sheet,

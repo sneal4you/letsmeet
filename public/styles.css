@@ -721,3 +721,6 @@ button.chip:active { transform: scale(0.96); }
 .screen.home .brand .home-name .input { text-align: center; }
 /* un aviso sin botón no bloquea los toques en lo que tiene debajo */
 .toast:not(:has(button)) { pointer-events: none; }
+/* el anillo de foco del círculo de color usa su propio color, no el azul */
+.color-toggle:focus-visible { outline-color: var(--c, var(--accent)); }
+.screen.home .home-name .color-toggle:focus { outline: none; }
