@@ -177,7 +177,7 @@ button:disabled { cursor: default; }
   display: flex; flex-direction: column; gap: 22px;
   animation: rise 0.4s var(--ease) both;
 }
-.screen.session { gap: 6px; padding-bottom: calc(8px + var(--safe-b)); height: 100dvh; min-height: 480px; }
+.screen.session { gap: 6px; padding-bottom: calc(60px + var(--safe-b)); height: 100dvh; min-height: 480px; }
 /* todo cabe en la pantalla: la rejilla ocupa el alto que sobra */
 .screen.session .board { flex: 1 1 auto; gap: 0; }
 .screen.session .board-body { flex: 1 1 auto; padding-top: 4px; }
@@ -600,12 +600,6 @@ button.chip:active { transform: scale(0.96); }
 .nav-info .best-list { margin: 0; padding: 0; gap: 4px; scroll-padding: 0; }
 .nav-info .best-item { padding: 2px 8px; }
 .nav-info .best-when { font-size: 11px; }
-/* Enviar integrado: azul si hay cambios, verde cuando está enviado */
-.send-btn { color: var(--accent); }
-.send-btn.dirty, .send-btn.queued { background: var(--accent); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(0, 122, 255, 0.35); }
-.send-btn.ok { color: var(--ok); }
-.send-btn:disabled { opacity: 1; }
-.screen.session .send-btn { min-width: 0; min-height: 0; padding: 0; }
 .nav-line { display: flex; align-items: baseline; }
 .nav-line > * { flex: none; }
 .nav-line .nav-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }

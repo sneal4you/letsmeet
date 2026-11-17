@@ -600,7 +600,7 @@ function renderSession() {
     cells: h('div', { class: 'cells', role: 'grid', 'aria-label': 'Horas de la semana. Toca o arrastra para marcar cuándo puedes.' }),
     best: h('section', { class: 'best', 'aria-label': 'Mejores horas' }),
     status: h('span', { class: 'send-status', role: 'status', 'aria-live': 'polite' }),
-    send: h('button', { type: 'button', class: 'icon-btn send-btn' }),
+    send: h('button', { type: 'button', class: 'btn primary send-btn' }, 'Enviar'),
   };
   els.board = h('section', { class: 'board', 'aria-label': 'Rejilla de horas' },
     els.dayHead,
@@ -609,14 +609,14 @@ function renderSession() {
     h('nav', { class: 'navrow' },
       h('a', { class: 'icon-btn', href: '#', 'aria-label': 'Inicio' }, icon('back')),
       h('div', { class: 'nav-info' },
-        els.chips),
-      els.send),
+        els.chips)),
     h('h1', { class: 'sr-only', text: session.title }),
-    els.status,
     memoryBanner(),
     els.hint,
     els.board,
-    els.best));
+    els.best),
+  // fuera de .screen: su animación de entrada (transform) haría que position: fixed se refiriese a ella
+  h('div', { class: 'sendbar glass' }, els.status, els.send));
   bindGrid(els.cells);
   // deslizar la cabecera de días a izquierda/derecha cambia de semana
   let sx = null;
@@ -675,11 +675,9 @@ function fillSendbar() {
   else if (meSent()) { text = 'Tus horas están enviadas'; label = 'Enviado'; disabled = true; cls = 'ok'; }
   else { text = 'Marca tus horas y envía'; }
   els.status.replaceChildren(h('span', { class: 'status-dot', 'aria-hidden': 'true' }), h('span', { text }));
-  els.status.className = `send-status sr-only ${cls}`;
-  els.send.className = `icon-btn send-btn ${cls}`;
-  els.send.setAttribute('aria-label', label === 'Enviado' ? 'Enviado' : `${label}: ${text}`);
-  els.send.title = text;
-  els.send.replaceChildren(icon(cls === 'ok' ? 'check' : 'send'));
+  els.status.className = `send-status ${cls}`;
+  els.send.className = 'btn primary send-btn';
+  els.send.replaceChildren(...(cls === 'ok' ? [icon('check'), label] : [label]));
   els.send.disabled = disabled;
   els.send.onclick = engine.status === 'queued' && !me.dirty ? () => { engine.resume(); engine._flushOutbox(); } : () => sendNow();
 }
