@@ -643,3 +643,6 @@ button.chip:active { transform: scale(0.96); }
 .cell.past, .cell.past.filled { background: transparent; box-shadow: inset 0 0 0 1px var(--cell-rim); opacity: 0.5; }
 .day-head .week-btn.dh-back { width: var(--ac); height: 34px; border-radius: 11px; flex: none; }
 .dh-month-nav { gap: 4px; }
+/* inicio: enlace personal arriba a la derecha */
+.screen.home { position: relative; }
+.home-account { position: absolute; top: calc(14px + var(--safe-t)); right: calc(var(--gut) + var(--safe-r)); z-index: 2; }

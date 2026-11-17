@@ -175,6 +175,13 @@ async function route() {
   await closeCtx();
   const hash = location.hash.slice(1);
   if (!hash) return renderHome();
+  if (hash.startsWith('a=')) {
+    history.replaceState(null, '', location.pathname + location.search); // la clave no se queda en la barra
+    const n = await importAccount(hash.slice(2));
+    renderHome();
+    toast(n ? `Recuperadas ${n} quedada${n === 1 ? '' : 's'}. Ábrelas para cargar tus horas.` : 'El enlace personal no es válido.');
+    return;
+  }
   const dec = C.decodeLink(hash);
   if (!dec) {
     history.replaceState(null, '', location.pathname + location.search);
@@ -261,7 +268,6 @@ async function renderHome() {
         h('span', { class: 'list-best' }),
         pending.has(s.id) ? h('span', { class: 'list-sub warn', 'data-pending': s.id, text: 'Cambios sin enviar' }) : null),
       h('button', { type: 'button', class: 'icon-btn subtle', 'aria-label': `Invitar a «${s.title}»`, title: 'Enlace de invitación', onclick: () => { const d = C.decodeLink(s.data); if (d) invite(d.session); } }, icon('mail')),
-      h('button', { type: 'button', class: 'icon-btn subtle', 'aria-label': `Copiar mi enlace personal de «${s.title}»`, title: 'Mi enlace personal', onclick: () => copyPersonalFor(s) }, icon('person')),
       h('button', {
         type: 'button', class: 'icon-btn subtle', 'aria-label': `Quitar «${s.title}» de este móvil`,
         onclick: async () => { if (!confirm(`¿Quitar «${s.title}»? Saldrás de la quedada y se borrarán tus horas para todos.`)) return; await removeSession(s.id); renderHome(); },
@@ -270,6 +276,7 @@ async function renderHome() {
   list?.classList.add("sessions");
 
   root.replaceChildren(h('main', { class: 'screen home' },
+    sessions.length ? h('button', { type: 'button', class: 'icon-btn home-account', 'aria-label': 'Copiar mi enlace personal (todas mis quedadas)', title: 'Mi enlace personal', onclick: copyAccountLink }, icon('person')) : null,
     h('header', { class: 'brand' }, brandMark(),
       h('h1', { class: 'large-title', text: "Let's Meet" })),
     memoryBanner(),
@@ -992,13 +999,35 @@ function renderSettings() {
     h('section', { class: 'group' },
       h('div', { class: 'group-body glass' }, h('button', { type: 'button', class: 'row action danger', onclick: leave }, icon('trash'), 'Salir de la quedada')))));
 }
-// Desde el inicio: el enlace personal de esa quedada (con la clave guardada en este móvil).
-async function copyPersonalFor(s) {
-  const d = C.decodeLink(s.data);
-  const me = await store.get(meKey(s.id));
-  if (!d || !me?.priv) { toast('Aún no te has unido a esta quedada.'); return; }
-  const url = `${location.origin}${location.pathname}#${C.encodeLink(d.session, me.priv)}`;
-  toast((await copyText(url)) ? 'Enlace personal copiado. No lo compartas con nadie.' : 'No se ha podido copiar.');
+// Enlace personal de la cuenta: todas mis quedadas con mi clave de cada una. Al abrirlo en otro
+// móvil o navegador se recuperan todas y sigues siendo tú en cada una. No se comparte.
+async function copyAccountLink() {
+  const items = [];
+  for (const s of await listSessions()) {
+    const me = await store.get(meKey(s.id));
+    items.push(me?.priv ? [s.data, me.priv] : [s.data]);
+  }
+  const url = `${location.origin}${location.pathname}#a=${C.bytesToB64u(new TextEncoder().encode(JSON.stringify(items)))}`;
+  toast((await copyText(url)) ? 'Enlace personal copiado: abre todas tus quedadas en otro móvil o navegador. No lo compartas con nadie.' : 'No se ha podido copiar.');
+}
+async function importAccount(str) {
+  let items;
+  try { items = JSON.parse(new TextDecoder().decode(C.b64uToBytes(str))); } catch { items = null; }
+  if (!Array.isArray(items)) return 0;
+  let n = 0;
+  for (const it of items.slice(0, 100)) {
+    const dec = Array.isArray(it) && typeof it[0] === 'string' ? C.decodeLink(it[0]) : null;
+    if (!dec) continue;
+    const priv = typeof it[1] === 'string' && /^[0-9a-f]{64}$/.test(it[1]) ? it[1] : null;
+    const { session } = dec;
+    const me = await store.get(meKey(session.id));
+    if (priv && (!me || me.priv !== priv)) {
+      try { await store.set(meKey(session.id), { ...identityFromPriv(priv), name: '', color: null, slots: C.slotsToB64(C.emptySlots(session)), updatedAt: 0, dirty: false, restored: true }); } catch { continue; }
+    }
+    await rememberSession(session, C.encodeLink(session));
+    n++;
+  }
+  return n;
 }
 async function copyPersonal() {
   toast((await copyText(personalUrl())) ? 'Enlace personal copiado. No lo compartas con nadie.' : 'No se ha podido copiar.');
