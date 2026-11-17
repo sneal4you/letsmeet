@@ -729,17 +729,14 @@ function fillGrid({ dir = 0 } = {}) {
   els.next.disabled = w >= nW - 1;
 
   // cabecera de días
-  const mon = C.MONTHS_SHORT[C.dateParts(C.addDays(session.startDate, Math.max(first, 0))).m - 1].slice(0, 3).toUpperCase();
-  // columna izquierda: el mes arriba (a la altura de los días de la semana) y debajo la flecha de semana anterior
-  els.dayHead.replaceChildren(h('span', { class: 'dh dh-month-col' },
-    h('span', { class: 'dh-w dh-mon', text: mon }),
-    w > 0 ? h('button', { type: 'button', class: 'week-btn dh-back', 'aria-label': 'Semana anterior', onclick: () => setWeek(ctx.week - 1) }, icon('back')) : h('span', { class: 'dh-back-gap' })), ...Array.from({ length: 7 }, (_, wd) => {
+  // flechas de semana a los dos lados, iguales; sin flecha si no hay semana antes o después
+  els.dayHead.replaceChildren(w > 0 ? els.prev : h('span'), ...Array.from({ length: 7 }, (_, wd) => {
     const day = first + wd;
     const date = C.addDays(session.startDate, day);
     const out = day < 0 || day >= C.daysOf(session);
     return h('span', { class: `dh${day === today ? ' today' : ''}${day < today || out ? ' past' : ''}`, 'aria-label': C.formatDayLong(date) },
       h('span', { class: 'dh-w', text: C.WEEKDAYS_SHORT[wd] }), h('span', { class: 'dh-n', text: String(C.dateParts(date).d) }));
-  }), els.next);
+  }), w < nW - 1 ? els.next : h('span'));
 
   // mes de la semana visible
   const ma = C.dateParts(C.addDays(session.startDate, Math.max(first, 0))).m;
