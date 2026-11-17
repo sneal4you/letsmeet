@@ -642,7 +642,6 @@ button.chip:active { transform: scale(0.96); }
 .dh-month-nav { gap: 4px; }
 /* inicio: enlace personal arriba a la derecha */
 .screen.home { position: relative; }
-.home-account { position: absolute; top: calc(14px + var(--safe-t)); right: calc(var(--gut) + var(--safe-r)); z-index: 2; }
 /* barra de enviar más fina */
 .sendbar { padding: 3px 3px 3px 14px; }
 .send-btn { min-height: 28px; min-width: 80px; font-size: 14px; }
@@ -661,3 +660,16 @@ button.chip:active { transform: scale(0.96); }
 .board-foot .best .best-when { font-size: 12px; }
 .screen.session .board-foot .legend { justify-content: flex-start; align-content: flex-start; }
 .screen.session .board-foot { margin: 6px 0 4px; }
+/* participantes y mejores horas más finos */
+.screen.session .board-foot .legend { gap: 4px; }
+.screen.session .board-foot .legend .chip { min-height: 22px; font-size: 12px; padding: 0 8px 0 6px; gap: 4px; }
+.screen.session .board-foot .legend .chip.pending { padding: 0 8px; }
+.screen.session .board-foot .legend .chip-dot { width: 7px; height: 7px; }
+.board-foot .best .best-list { gap: 3px; }
+.board-foot .best .best-item { padding: 1px 8px; }
+.board-foot .best .best-when { font-size: 11px; }
+/* cabecera del inicio: logo, nombre a su derecha y el clip del enlace personal al final */
+.screen.home .brand { flex-direction: row; align-items: center; gap: 12px; }
+.screen.home .brand .brand-mark { margin-bottom: 0; flex: none; transform: scale(0.8); }
+.screen.home .brand .large-title { flex: 1; min-width: 0; }
+.home-account { flex: none; }

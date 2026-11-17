@@ -41,6 +41,7 @@ const ICONS = {
   next: [['path', 'M9 6l6 6-6 6']],
   mail: [['path', 'M3 6h18v12H3zM3 7l9 6 9-6']],
   send: [['path', 'M4 12l16-8-6 16-2.5-6.5zM11.5 13.5L20 4']],
+  clip: [['path', 'M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9']],
   person: [['circle', 12, 8, 4], ['path', 'M4 21c0-4 4-6 8-6s8 2 8 6']],
   share: [['path', 'M12 3v12M8 7l4-4 4 4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6']],
   settings: [['path', 'M4 7h9M17 7h3M4 17h3M11 17h9'], ['circle', 15, 7, 2], ['circle', 9, 17, 2]],
@@ -276,9 +277,9 @@ async function renderHome() {
   list?.classList.add("sessions");
 
   root.replaceChildren(h('main', { class: 'screen home' },
-    sessions.length ? h('button', { type: 'button', class: 'icon-btn home-account', 'aria-label': 'Copiar mi enlace personal (todas mis quedadas)', title: 'Mi enlace personal', onclick: copyAccountLink }, icon('person')) : null,
     h('header', { class: 'brand' }, brandMark(),
-      h('h1', { class: 'large-title', text: "Let's Meet" })),
+      h('h1', { class: 'large-title', text: "Let's Meet" }),
+      sessions.length ? h('button', { type: 'button', class: 'icon-btn home-account', 'aria-label': 'Copiar mi enlace personal (todas mis quedadas)', title: 'Mi enlace personal', onclick: copyAccountLink }, icon('clip')) : null),
     memoryBanner(),
     list,
     h('form', { class: 'create', onsubmit: create, novalidate: true },
