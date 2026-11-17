@@ -24,7 +24,7 @@ const keys = await K.deriveSessionKeys(session.key, session.id);
 const me = K.newIdentity();
 const slots = C.emptySlots(session);
 C.setBit(slots, C.slotIndex(session, 1, 18), true);
-const payload = { v: 1, participantId: me.pid, name: 'Prueba', color: 'blue', slots: C.slotsToB64(slots), updatedAt: Date.now() };
+const payload = { v: C.PAYLOAD_VERSION, participantId: me.pid, name: 'Prueba', color: 'blue', slots: C.slotsToB64(slots), updatedAt: Date.now() };
 const ev = await K.signEvent({ kind, tags: [['d', `${keys.topic}:${me.pid}`], ['t', keys.topic]], content: await K.encryptJSON(keys.encKey, payload), created_at: Math.floor(Date.now() / 1000) }, me.priv);
 console.log(`kind ${kind} · topic ${keys.topic} · evento ${ev.id.slice(0, 12)}…`);
 

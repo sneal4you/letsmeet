@@ -97,7 +97,7 @@ test('A crea, B y C se unen; C estaba desconectado y recibe al conectarse; gossi
     const topic = A.eng.topic;
     const mallory = K.newIdentity();
     const other = await K.deriveSessionKeys(C.randomBytes(32), session.id);
-    const pl = (pid) => ({ v: 1, participantId: pid, name: 'Intruso', color: 'pink', slots: C.slotsToB64(C.emptySlots(session)), updatedAt: Date.now() + 10000 });
+    const pl = (pid) => ({ v: C.PAYLOAD_VERSION, participantId: pid, name: 'Intruso', color: 'pink', slots: C.slotsToB64(C.emptySlots(session)), updatedAt: Date.now() + 10000 });
     const tags = (pid) => [['d', `${topic}:${pid}`], ['t', topic]];
     const now = Math.floor(Date.now() / 1000);
     // 1) firma falsa
@@ -208,4 +208,38 @@ test('relé que rechaza el kind: no cuenta como enviado si ningún otro acepta',
   await wait(600);
   assert.equal(eng.status, 'queued');
   eng.stop(); await bad.close();
+});
+
+test('B sale de la quedada: A deja de verlo; el re-gossip no lo resucita ni un evento viejo', async () => {
+  const S2 = C.newSession({ title: 'Salida', n: 2, startDate: '2026-11-16' });
+  const mk = (store = memoryStore()) => { const e = new SyncEngine({ session: S2, store, relays: relays.map((r) => r.url), ...fast }); engines.push(e); return e; };
+  const ia = K.newIdentity(); const ib = K.newIdentity();
+  const sa = memoryStore();
+  const A = mk(sa); const B = mk();
+  await A.init(); A.start(); await B.init(); B.start();
+  const slots = C.emptySlots(S2); C.setBit(slots, C.slotIndex(S2, 2, 10), true);
+  await A.publish({ name: 'Ana', color: 'red', slots, updatedAt: Date.now() }, ia);
+  await B.publish({ name: 'Bea', color: 'blue', slots, updatedAt: Date.now() }, ib);
+  await until(() => names(A).join() === 'Ana,Bea', 4000, 'A ve a Bea');
+  const bOld = A.events[ib.pid];
+  await B.publish({ name: 'Bea', color: 'blue', slots: C.emptySlots(S2), updatedAt: Date.now() + 5, left: true }, ib);
+  await until(() => names(A).join() === 'Ana', 4000, 'A deja de ver a Bea');
+  assert.ok(A.participants.get(ib.pid).left, 'baja guardada');
+  assert.equal(C.slotCounts(S2, A.people())[C.slotIndex(S2, 2, 10)], 1);
+  // un evento viejo de B no lo resucita
+  assert.equal(await A.ingest(bOld), false);
+  // los relés olvidan; A reabre y re-publica la baja (no la versión anterior); un móvil nuevo no ve a Bea
+  for (const r of relays) r.forget();
+  A.stop();
+  const A2 = mk(sa); await A2.init();
+  assert.equal(names(A2).join(), 'Ana');
+  A2.start();
+  await until(() => relays.every((r) => r.events.size >= 2), 4000, 'gossip');
+  const N = mk(); await N.init(); N.start();
+  await until(() => N.participants.size === 2, 4000, 'móvil nuevo recibe');
+  assert.equal(names(N).join(), 'Ana');
+  for (const r of relays) r.inject(bOld);
+  await wait(300);
+  assert.equal(names(N).join(), 'Ana');
+  B.stop(); A2.stop(); N.stop();
 });

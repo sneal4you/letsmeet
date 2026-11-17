@@ -1,7 +1,7 @@
 // sync.js - sincronización por relés Nostr (NIP-01) usados como buzón cifrado.
 // Transporte inyectable: `connect(url)` debe devolver un objeto con la API de WebSocket
 // (send, close, onopen, onmessage, onclose, onerror).
-import { KIND, RELAYS, PID_RE, validatePayload, isNewer, pidFromPubkey, slotsToB64 } from './core.js';
+import { KIND, RELAYS, PID_RE, PAYLOAD_VERSION, validatePayload, isNewer, pidFromPubkey, slotsToB64 } from './core.js';
 import { deriveSessionKeys, encryptJSON, decryptJSON, signEvent, verifyEvent } from './crypto.js';
 
 const keyOf = (kind, sid) => `${kind}:${sid}`;
@@ -57,10 +57,11 @@ export class SyncEngine {
   }
 
   _entry(payload, ev) {
-    return { pid: payload.participantId, pubkey: ev.pubkey, name: payload.name, color: payload.color, slots: payload.slots, updatedAt: payload.updatedAt, payload, event: ev };
+    return { pid: payload.participantId, pubkey: ev.pubkey, name: payload.name, color: payload.color, slots: payload.slots, updatedAt: payload.updatedAt, left: payload.left, payload, event: ev };
   }
 
-  people() { return [...this.participants.values()]; }
+  /** Participantes activos: quien ha salido (baja) se guarda pero no cuenta ni se muestra. */
+  people() { return [...this.participants.values()].filter((p) => !p.left); }
 
   connection() {
     let open = 0; let connecting = 0;
@@ -254,10 +255,11 @@ export class SyncEngine {
   }
 
   // ---------- envío ----------
-  /** identity: {priv,pub,pid}; data: {name,color,slots(Uint8Array),updatedAt} */
+  /** identity: {priv,pub,pid}; data: {name,color,slots(Uint8Array),updatedAt,left?}. left: baja de la quedada. */
   async publish(data, identity) {
     if (!this.ready) await this.init();
-    const payload = { v: 1, participantId: identity.pid, name: data.name, color: data.color, slots: slotsToB64(data.slots), updatedAt: data.updatedAt };
+    const payload = { v: PAYLOAD_VERSION, participantId: identity.pid, name: data.name, color: data.color, slots: slotsToB64(data.slots), updatedAt: data.updatedAt };
+    if (data.left) payload.left = true;
     const content = await encryptJSON(this.encKey, payload);
     let created_at = Math.floor(this.now() / 1000);
     const prev = this.events[identity.pid];

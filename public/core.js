@@ -1,6 +1,9 @@
 // core.js - lógica pura de Quedamos (sin DOM, sin red). Se usa en el navegador y en los tests de Node.
 
-export const FORMAT_VERSION = 1;
+export const FORMAT_VERSION = 1; // versión del enlace
+// Versión del horario enviado: 1 = una casilla por hora (antiguo), 2 = una por media hora.
+export const PAYLOAD_VERSION = 2;
+export const SLOTS_PER_HOUR = 2;
 export const DAYS = 30;
 export const MIN_PEOPLE = 2;
 export const MAX_PEOPLE = 20;
@@ -102,32 +105,52 @@ export function todayIndex(session, now = new Date()) { return diffDays(session.
 export function formatDayShort(s) { const { m, d } = dateParts(s); return `${WEEKDAYS_SHORT[weekdayMon(s)]} ${d} ${MONTHS_SHORT[m - 1]}`; }
 export function formatDayLong(s) { const { m, d } = dateParts(s); const w = WEEKDAYS_LONG[weekdayMon(s)]; return `${w[0].toUpperCase()}${w.slice(1)} ${d} de ${MONTHS_LONG[m - 1]}`; }
 export function formatHour(h) { return `${pad2(h)}:00`; }
+/** Hora con medias (10.5 -> "10:30"), sin cero delante. */
+export function formatTime(h) { const m = Math.round((h % 1) * 60); return `${Math.floor(h)}:${pad2(m)}`; }
 
-// ---------- slots (bitmap de DAYS × horas del rango) ----------
+// ---------- slots (bitmap de DAYS × medias horas del rango) ----------
 export function hoursOf(session) { return session.endH - session.startH; }
-export function slotCount(session) { return DAYS * hoursOf(session); }
+/** Casillas (medias horas) por día. */
+export function slotsPerDay(session) { return hoursOf(session) * SLOTS_PER_HOUR; }
+export function slotCount(session) { return DAYS * slotsPerDay(session); }
 export function slotBytes(session) { return Math.ceil(slotCount(session) / 8); }
-export function slotIndex(session, day, hour) { return day * hoursOf(session) + (hour - session.startH); }
+/** half: 0 = en punto, 1 = y media. */
+export function slotIndex(session, day, hour, half = 0) { return day * slotsPerDay(session) + (hour - session.startH) * SLOTS_PER_HOUR + half; }
+/** Hora (con decimales) en la que empieza la casilla k del día. */
+export function slotHour(session, k) { return session.startH + k / SLOTS_PER_HOUR; }
 export function emptySlots(session) { return new Uint8Array(slotBytes(session)); }
 export function getBit(bits, i) { return (bits[i >> 3] >> (i & 7)) & 1; }
 export function setBit(bits, i, on) { if (on) bits[i >> 3] |= 1 << (i & 7); else bits[i >> 3] &= ~(1 << (i & 7)); }
 export function countBits(bits) { let c = 0; for (const b of bits) { let x = b; while (x) { c += x & 1; x >>= 1; } } return c; }
 export function slotsToB64(bits) { return bytesToB64u(bits); }
-export function slotsFromB64(session, str) {
+function legacyBytes(session) { return Math.ceil(DAYS * hoursOf(session) / 8); }
+/** Convierte un bitmap antiguo (una casilla por hora) al actual: cada hora marca sus dos medias horas. */
+export function expandHourly(session, old) {
+  const out = emptySlots(session);
+  const total = DAYS * hoursOf(session);
+  for (let i = 0; i < total; i++) if (getBit(old, i)) for (let s = 0; s < SLOTS_PER_HOUR; s++) setBit(out, i * SLOTS_PER_HOUR + s, true);
+  return out;
+}
+/**
+ * Lee un bitmap. Por defecto acepta también el formato antiguo por horas (copias locales guardadas antes
+ * del cambio) y lo convierte. legacy: true = exige el antiguo; false = exige el actual.
+ */
+export function slotsFromB64(session, str, { legacy } = {}) {
   const bits = b64uToBytes(str);
-  if (bits.length !== slotBytes(session)) throw new Error('longitud de slots incorrecta');
+  if (legacy !== false && bits.length === legacyBytes(session) && bits.length !== slotBytes(session)) return expandHourly(session, bits);
+  if (legacy === true || bits.length !== slotBytes(session)) throw new Error('longitud de slots incorrecta');
   const total = slotCount(session);
   // limpiar bits sobrantes del último byte
   for (let i = total; i < bits.length * 8; i++) setBit(bits, i, false);
   return bits;
 }
 export function dayHasAny(session, bits, day) {
-  const h = hoursOf(session);
+  const h = slotsPerDay(session);
   for (let i = day * h; i < (day + 1) * h; i++) if (getBit(bits, i)) return true;
   return false;
 }
 export function setDay(session, bits, day, on) {
-  const h = hoursOf(session);
+  const h = slotsPerDay(session);
   for (let i = day * h; i < (day + 1) * h; i++) setBit(bits, i, on);
 }
 // ---------- semanas (lunes a domingo) ----------
@@ -144,10 +167,10 @@ export function weekOfDay(session, day) {
 /**
  * Copia el patrón de la semana `w` a las demás semanas (cada día a ese mismo día de la semana).
  * Solo escribe en días de la ventana desde `fromDay` (no toca días pasados); un día de origen fuera de
- * la ventana no se copia. Devuelve el nº de horas cambiadas.
+ * la ventana no se copia. Devuelve el nº de casillas cambiadas.
  */
 export function repeatWeek(session, bits, w, fromDay = 0) {
-  const h = hoursOf(session);
+  const h = slotsPerDay(session);
   const first = weekFirstDay(session, w);
   let changed = 0;
   for (let wd = 0; wd < 7; wd++) {
@@ -165,9 +188,9 @@ export function repeatWeek(session, bits, w, fromDay = 0) {
   }
   return changed;
 }
-/** Borra la semana `w` (solo días de la ventana desde `fromDay`). Devuelve el nº de horas borradas. */
+/** Borra la semana `w` (solo días de la ventana desde `fromDay`). Devuelve el nº de casillas borradas. */
 export function clearWeek(session, bits, w, fromDay = 0) {
-  const h = hoursOf(session);
+  const h = slotsPerDay(session);
   const first = weekFirstDay(session, w);
   let changed = 0;
   for (let d = Math.max(first, fromDay, 0); d < Math.min(first + 7, DAYS); d++) {
@@ -177,7 +200,7 @@ export function clearWeek(session, bits, w, fromDay = 0) {
 }
 /** true si en la semana `w` hay alguna hora (desde `fromDay`) en la que coinciden todos. */
 export function weekHasFull(session, counts, required, w, fromDay = 0) {
-  const h = hoursOf(session);
+  const h = slotsPerDay(session);
   const first = weekFirstDay(session, w);
   for (let d = Math.max(first, fromDay, 0); d < Math.min(first + 7, DAYS); d++) {
     for (let i = d * h; i < (d + 1) * h; i++) if (isFull(counts[i], required)) return true;
@@ -207,15 +230,18 @@ export function pidFromPubkey(pubHex) { return pubHex.slice(0, 16); }
 
 export function validatePayload(p, session) {
   if (!p || typeof p !== 'object') return null;
-  if (p.v !== 1) return null;
+  if (p.v !== 1 && p.v !== PAYLOAD_VERSION) return null;
   if (typeof p.participantId !== 'string' || !PID_RE.test(p.participantId)) return null;
   const nm = validateName(p.name);
   if (!nm.ok) return null;
   if (!COLOR_IDS.includes(p.color)) return null;
   if (!Number.isSafeInteger(p.updatedAt) || p.updatedAt <= 0) return null;
   let slots;
-  try { slots = slotsFromB64(session, p.slots); } catch { return null; }
-  return { participantId: p.participantId, name: nm.value, color: p.color, slots, updatedAt: p.updatedAt };
+  // v1 (por horas) se convierte duplicando cada hora en sus dos medias horas
+  try { slots = slotsFromB64(session, p.slots, { legacy: p.v === 1 }); } catch { return null; }
+  // left: la persona ha salido de la quedada (evento de baja con slots vacíos)
+  if (p.left !== undefined && p.left !== true) return null;
+  return { participantId: p.participantId, name: nm.value, color: p.color, slots, updatedAt: p.updatedAt, left: p.left === true };
 }
 
 // ---------- enlace de la sesión ----------
@@ -245,7 +271,7 @@ export function decodeLink(hash) {
     return { session: { v: FORMAT_VERSION, id, key, title: t.value, n, startH, endH, startDate }, priv: priv || null };
   } catch { return null; }
 }
-export function newSession({ title, n, startH = 9, endH = 22, startDate = todayStr() }) {
+export function newSession({ title, n, startH = 8, endH = 22, startDate = todayStr() }) {
   return { v: FORMAT_VERSION, id: bytesToB64u(randomBytes(16)), key: randomBytes(32), title, n, startH, endH, startDate };
 }
 
@@ -273,12 +299,14 @@ export function slotCounts(session, people) {
 }
 export function whoAt(people, i) { return people.filter((p) => getBit(p.slots, i)); }
 /**
- * Mejores bloques: horas consecutivas del mismo día con exactamente el mismo grupo de personas.
+ * Mejores bloques: medias horas consecutivas del mismo día con exactamente el mismo grupo de personas.
+ * startH/endH son horas con decimales (10.5 = 10:30).
  * Orden: nº de personas desc, duración desc, fecha más cercana, hora más temprana.
- * fromDay/fromHour: solo desde hoy (y desde la hora actual en el día de hoy).
+ * fromDay/fromHour: solo desde hoy (y desde la hora actual, admite medias, en el día de hoy).
  */
 export function bestBlocks(session, people, { fromDay = 0, fromHour = 0, limit = 5 } = {}) {
-  const h = hoursOf(session);
+  const h = slotsPerDay(session);
+  const step = 1 / SLOTS_PER_HOUR;
   const required = requiredCount(session, people.length);
   const minCount = people.length >= 2 ? 2 : 1;
   const blocks = [];
@@ -286,14 +314,14 @@ export function bestBlocks(session, people, { fromDay = 0, fromHour = 0, limit =
     let cur = null;
     const close = () => { if (cur && cur.pids.length >= minCount) blocks.push(cur); cur = null; };
     for (let k = 0; k < h; k++) {
-      const hour = session.startH + k;
+      const hour = slotHour(session, k);
       if (day === fromDay && hour < fromHour) { close(); continue; }
       const i = day * h + k;
       const pids = people.filter((p) => getBit(p.slots, i)).map((p) => p.pid);
       const key = pids.join(',');
-      if (cur && cur.key === key) { cur.endH = hour + 1; continue; }
+      if (cur && cur.key === key) { cur.endH = hour + step; continue; }
       close();
-      if (pids.length) cur = { day, date: dayDate(session, day), startH: hour, endH: hour + 1, pids, key };
+      if (pids.length) cur = { day, date: dayDate(session, day), startH: hour, endH: hour + step, pids, key };
     }
     close();
   }
@@ -302,5 +330,5 @@ export function bestBlocks(session, people, { fromDay = 0, fromHour = 0, limit =
   return blocks.slice(0, limit);
 }
 export function formatBlock(b) {
-  return `${formatDayShort(b.date)} · ${pad2(b.startH)}:00–${pad2(b.endH)}:00 · ${b.count}/${b.required}`;
+  return `${formatDayShort(b.date)} · ${formatTime(b.startH)}–${formatTime(b.endH)} · ${b.count}/${b.required}`;
 }

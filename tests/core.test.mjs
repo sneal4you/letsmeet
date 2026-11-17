@@ -4,7 +4,10 @@ import * as C from '../public/core.js';
 
 const S = { v: 1, id: 'AAAAAAAAAAAAAAAAAAAAAA', key: new Uint8Array(32).fill(7), title: 'Cena', n: 3, startH: 9, endH: 22, startDate: '2026-11-16' };
 const person = (pid, name, color, setter) => { const slots = C.emptySlots(S); setter(slots); return { pid, name, color, slots }; };
-const on = (slots, day, ...hours) => hours.forEach((h) => C.setBit(slots, C.slotIndex(S, day, h), true));
+// marca horas enteras (sus dos medias horas)
+const on = (slots, day, ...hours) => hours.forEach((h) => { C.setBit(slots, C.slotIndex(S, day, h, 0), true); C.setBit(slots, C.slotIndex(S, day, h, 1), true); });
+// marca medias horas: 10.5 = 10:30-11:00
+const onHalf = (slots, day, ...hs) => hs.forEach((h) => C.setBit(slots, C.slotIndex(S, day, Math.floor(h), h % 1 ? 1 : 0), true));
 
 test('fechas: suma, diferencia, día de la semana y meses', () => {
   assert.equal(C.addDays('2026-11-16', 30), '2026-12-16');
@@ -24,19 +27,21 @@ test('fechas: suma, diferencia, día de la semana y meses', () => {
 
 test('slots: índices, bitmap y base64url ida y vuelta', () => {
   assert.equal(C.hoursOf(S), 13);
-  assert.equal(C.slotCount(S), 390);
-  assert.equal(C.slotBytes(S), 49);
+  assert.equal(C.slotsPerDay(S), 26);
+  assert.equal(C.slotCount(S), 780);
+  assert.equal(C.slotBytes(S), 98);
   const b = C.emptySlots(S);
   C.setBit(b, C.slotIndex(S, 0, 9), true);
-  C.setBit(b, C.slotIndex(S, 29, 21), true);
-  assert.equal(C.slotIndex(S, 29, 21), 389);
+  C.setBit(b, C.slotIndex(S, 29, 21, 1), true);
+  assert.equal(C.slotIndex(S, 29, 21, 1), 779);
+  assert.equal(C.slotIndex(S, 1, 9, 1), 27);
   const back = C.slotsFromB64(S, C.slotsToB64(b));
   assert.deepEqual([...back], [...b]);
   assert.equal(C.countBits(back), 2);
   assert.throws(() => C.slotsFromB64(S, C.slotsToB64(new Uint8Array(10))));
   C.setDay(S, b, 3, true);
   assert.ok(C.dayHasAny(S, b, 3));
-  assert.equal(C.countBits(b), 15);
+  assert.equal(C.countBits(b), 28);
   C.setDay(S, b, 3, false);
   assert.ok(!C.dayHasAny(S, b, 3));
 });
@@ -62,8 +67,8 @@ test('semanas L-D: páginas, repetir y borrar semana', () => {
   for (const d of [16, 23]) { assert.ok(C.getBit(b, C.slotIndex(S, d, 18))); assert.ok(C.getBit(b, C.slotIndex(S, d, 19))); }
   assert.ok(!C.getBit(b, C.slotIndex(S, 1, 18)));
   assert.ok(C.getBit(b, C.slotIndex(S, 2, 10)), 'día pasado intacto');
-  assert.equal(changed, 4);
-  assert.equal(C.clearWeek(S, b, 2), 2);
+  assert.equal(changed, 8);
+  assert.equal(C.clearWeek(S, b, 2), 4);
   assert.ok(!C.getBit(b, C.slotIndex(S, 16, 18)));
   assert.equal(C.clearWeek(S, b, 0, 3), 0); // el día 2 es pasado: no se borra
   assert.ok(C.getBit(b, C.slotIndex(S, 2, 10)));
@@ -74,7 +79,7 @@ test('enlace: codificar y decodificar (con y sin clave privada)', () => {
   const dec = C.decodeLink('#' + C.encodeLink(s));
   assert.equal(dec.session.title, 'Cumple de Lúa');
   assert.equal(dec.session.n, 5);
-  assert.equal(dec.session.startH, 9);
+  assert.equal(dec.session.startH, 8);
   assert.equal(dec.session.endH, 22);
   assert.deepEqual([...dec.session.key], [...s.key]);
   assert.equal(dec.priv, null);
@@ -91,7 +96,7 @@ test('validación de nombres y payloads', () => {
   assert.ok(!C.validateName('').ok);
   assert.ok(!C.validateName('x'.repeat(25)).ok);
   assert.ok(!C.validateName('ana', ['Ana']).ok);
-  const ok = { v: 1, participantId: '0123456789abcdef', name: 'Ana', color: 'blue', slots: C.slotsToB64(C.emptySlots(S)), updatedAt: 1 };
+  const ok = { v: C.PAYLOAD_VERSION, participantId: '0123456789abcdef', name: 'Ana', color: 'blue', slots: C.slotsToB64(C.emptySlots(S)), updatedAt: 1 };
   assert.ok(C.validatePayload(ok, S));
   assert.equal(C.validatePayload({ ...ok, color: 'lila' }, S), null);
   assert.equal(C.validatePayload({ ...ok, slots: 'AAAA' }, S), null);
@@ -146,4 +151,40 @@ test('mejores bloques: orden por personas, duración y fecha; solo desde hoy', (
   assert.deepEqual(fromNoon.find((x) => x.day === 1) && [fromNoon.find((x) => x.day === 1).startH], [12]);
   assert.ok(C.bestBlocks(S, [a, b, c], { fromDay: 0 }).some((x) => x.day === 0));
   assert.equal(C.bestBlocks(S, [a, b, c], { limit: 2 }).length, 2);
+});
+
+test('medias horas: bloques con :30, formato y coincidencia por media hora', () => {
+  const a = person('a', 'Ana', 'red', (s) => onHalf(s, 3, 10.5, 11, 11.5));
+  const b = person('b', 'Bea', 'blue', (s) => onHalf(s, 3, 10, 10.5, 11, 11.5, 12));
+  const best = C.bestBlocks(S, [a, b], { fromDay: 0 });
+  assert.deepEqual(best.map((x) => [x.day, x.startH, x.endH, x.count]), [[3, 10.5, 12, 2]]);
+  assert.equal(C.formatBlock(best[0]), 'Jue 19 nov · 10:30–12:00 · 2/3');
+  assert.equal(C.formatTime(9), '9:00');
+  assert.equal(C.formatTime(21.5), '21:30');
+  assert.equal(C.slotHour(S, 3), 10.5);
+  const counts = C.slotCounts(S, [a, b]);
+  assert.equal(counts[C.slotIndex(S, 3, 10, 0)], 1);
+  assert.equal(counts[C.slotIndex(S, 3, 10, 1)], 2);
+  assert.ok(C.isFull(counts[C.slotIndex(S, 3, 10, 1)], 2));
+  assert.ok(!C.isFull(counts[C.slotIndex(S, 3, 10, 0)], 2));
+  // desde las 11:30 de hoy: solo queda 11:30-12:00
+  const late = C.bestBlocks(S, [a, b], { fromDay: 3, fromHour: 11.5 });
+  assert.deepEqual(late.map((x) => [x.startH, x.endH]), [[11.5, 12]]);
+});
+
+test('formato antiguo por horas: se convierte duplicando cada hora', () => {
+  const old = new Uint8Array(Math.ceil(C.DAYS * C.hoursOf(S) / 8));
+  C.setBit(old, 2 * 13 + 1, true); // día 2, 10:00 en el formato por horas
+  const b64 = C.slotsToB64(old);
+  const bits = C.slotsFromB64(S, b64); // copia local antigua: se acepta y convierte
+  assert.equal(bits.length, C.slotBytes(S));
+  assert.ok(C.getBit(bits, C.slotIndex(S, 2, 10, 0)) && C.getBit(bits, C.slotIndex(S, 2, 10, 1)));
+  assert.equal(C.countBits(bits), 2);
+  const base = { participantId: '0123456789abcdef', name: 'Ana', color: 'blue', updatedAt: 1 };
+  const p1 = C.validatePayload({ ...base, v: 1, slots: b64 }, S);
+  assert.ok(p1 && C.getBit(p1.slots, C.slotIndex(S, 2, 10, 1)));
+  // un v1 con longitud nueva o un v2 con longitud antigua se ignoran
+  assert.equal(C.validatePayload({ ...base, v: 1, slots: C.slotsToB64(C.emptySlots(S)) }, S), null);
+  assert.equal(C.validatePayload({ ...base, v: 2, slots: b64 }, S), null);
+  assert.equal(C.validatePayload({ ...base, v: 3, slots: C.slotsToB64(C.emptySlots(S)) }, S), null);
 });
