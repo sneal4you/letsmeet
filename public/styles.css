@@ -643,3 +643,8 @@ button.chip:active { transform: scale(0.96); }
 /* inicio: enlace personal arriba a la derecha */
 .screen.home { position: relative; }
 .home-account { position: absolute; top: calc(14px + var(--safe-t)); right: calc(var(--gut) + var(--safe-r)); z-index: 2; }
+/* barra de enviar más fina */
+.sendbar { padding: 3px 3px 3px 14px; }
+.send-btn { min-height: 28px; min-width: 80px; font-size: 14px; }
+.send-status { font-size: 13px; }
+.screen.session { padding-bottom: calc(48px + var(--safe-b)); }
