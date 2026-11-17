@@ -583,3 +583,8 @@ button.chip:active { transform: scale(0.96); }
 
 .home-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .icon-btn.danger { color: var(--red, #ff3b30); }
+
+/* Tus quedadas: cada una en su propia tarjeta, separadas */
+.group.sessions .group-body { background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; overflow: visible; display: flex; flex-direction: column; gap: 10px; }
+.group.sessions .link-row { border-radius: 22px; background: var(--glass); border: 0.5px solid var(--rim); -webkit-backdrop-filter: blur(26px) saturate(185%); backdrop-filter: blur(26px) saturate(185%); }
+.group.sessions .link-row::before { display: none; }

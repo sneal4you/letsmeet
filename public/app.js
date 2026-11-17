@@ -264,6 +264,7 @@ async function renderHome() {
         onclick: async () => { if (!confirm(`¿Quitar «${s.title}»? Saldrás de la quedada y se borrarán tus horas para todos.`)) return; await removeSession(s.id); renderHome(); },
       }, icon('trash')))))
     : null;
+  list?.classList.add("sessions");
 
   root.replaceChildren(h('main', { class: 'screen home' },
     h('header', { class: 'brand' }, brandMark(),
