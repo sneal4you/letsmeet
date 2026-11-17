@@ -624,6 +624,9 @@ button.chip:active { transform: scale(0.96); }
 .nav-info .best-list li { flex: 0 0 auto; width: auto; }
 .dh-month { font-size: 12px; font-weight: 700; color: var(--label-2); text-align: center; letter-spacing: 0.04em; }
 .day-head { touch-action: pan-y; }
-/* cabecera de días debajo de la rejilla */
-.screen.session .day-head { position: static; border-bottom: 0; border-top: 0.5px solid var(--sep); margin-top: 4px; }
-.screen.session .board-body { padding-top: 0; }
+/* participantes arriba, junto a la flecha; mejores horas debajo del calendario */
+.nav-info .legend { justify-content: flex-start; }
+.screen.session > .best .best-list { flex-wrap: wrap; justify-content: center; overflow: visible; scroll-snap-type: none; margin: 0; padding: 0; gap: 4px; }
+.screen.session > .best .best-list li { flex: 0 0 auto; width: auto; }
+.screen.session > .best .best-item { padding: 3px 10px; }
+.screen.session > .best .best-when { font-size: 12px; }

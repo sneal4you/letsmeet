@@ -588,20 +588,20 @@ function renderSession() {
     send: h('button', { type: 'button', class: 'icon-btn send-btn' }),
   };
   els.board = h('section', { class: 'board', 'aria-label': 'Rejilla de horas' },
-    h('div', { class: 'board-body' }, els.hours, els.cells, h('span')),
-    els.dayHead);
+    els.dayHead,
+    h('div', { class: 'board-body' }, els.hours, els.cells, h('span')));
   root.replaceChildren(h('main', { class: 'screen session' },
     h('nav', { class: 'navrow' },
       h('a', { class: 'icon-btn', href: '#', 'aria-label': 'Inicio' }, icon('back')),
       h('div', { class: 'nav-info' },
-        els.best),
+        els.chips),
       els.send),
     h('h1', { class: 'sr-only', text: session.title }),
     els.status,
     memoryBanner(),
     els.hint,
     els.board,
-    els.chips));
+    els.best));
   bindGrid(els.cells);
   // deslizar la cabecera de días a izquierda/derecha cambia de semana
   let sx = null;
