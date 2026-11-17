@@ -306,7 +306,7 @@ async function fillHomeBest(sessions) {
         const today = C.todayIndex(session);
         const now = new Date();
         const fromHour = (Math.floor((now.getHours() * 60 + now.getMinutes()) / 30) + 1) / 2;
-        if (ps.length >= 2 && today < C.DAYS) blocks = C.bestBlocks(session, ps, { fromDay: Math.max(0, today), fromHour: today >= 0 ? fromHour : 0, limit: 2 });
+        if (ps.length >= 2 && today < C.DAYS) blocks = C.bestBlocks(session, ps, { fromDay: Math.max(0, today), fromHour: today >= 0 ? fromHour : 0, limit: 50 }).filter((b) => b.full).slice(0, 2);
       }
     } catch (e) { console.error(e); }
     if (!out.isConnected) return; // se ha salido del inicio
@@ -943,7 +943,7 @@ function fillBest() {
   const now = new Date();
   // desde la siguiente media hora
   const fromHour = (Math.floor((now.getHours() * 60 + now.getMinutes()) / 30) + 1) / 2;
-  const blocks = ps.length < 2 ? [] : C.bestBlocks(session, ps, { fromDay: Math.max(0, today), fromHour: today >= 0 ? fromHour : 0, limit: 6 });
+  const blocks = ps.length < 2 ? [] : C.bestBlocks(session, ps, { fromDay: Math.max(0, today), fromHour: today >= 0 ? fromHour : 0, limit: 50 }).filter((b) => b.full).slice(0, 6);
   const byPid = new Map(ps.map((p) => [p.pid, p]));
   // sin coincidencias no ocupa sitio
   if (!blocks.length) { els.best.replaceChildren(); return; }
