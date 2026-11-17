@@ -273,9 +273,14 @@ async function renderHome() {
     const startH = Number(from.value); const endH = Number(to.value);
     if (endH <= startH) { err.textContent = 'La hora final tiene que ser posterior a la inicial.'; return; }
     const session = C.newSession({ title: t.value, n, startH, endH });
+    // se queda en el inicio: el enlace de invitación se copia al momento (dentro del toque, para que el navegador lo permita)
+    const copied = copyText(inviteUrl(session));
     const me = { ...newIdentity(), name: nm.value, color, slots: C.slotsToB64(C.emptySlots(session)), updatedAt: Date.now(), dirty: false, created: true };
     await store.set(meKey(session.id), me);
-    location.hash = C.encodeLink(session);
+    await rememberSession(session, C.encodeLink(session));
+    const ok = await copied;
+    await renderHome();
+    toast(ok ? `«${t.value}» creada. Enlace de invitación copiado: pégalo en el grupo.` : `«${t.value}» creada. Usa el sobre de su tarjeta para invitar.`);
   }
 
   const list = sessions.length
@@ -292,8 +297,9 @@ async function renderHome() {
     : null;
   list?.classList.add("sessions");
 
-  const sheet = h('div', { class: 'sheet-wrap', hidden: true, onclick: (e) => { if (e.target === sheet) openCreate(false); } },
-    h('form', { class: 'create sheet glass', onsubmit: create, novalidate: true, role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Nueva quedada' },
+  const openBtn = h('button', { type: 'button', class: 'btn primary wide open-create', 'aria-expanded': 'false', onclick: () => openCreate(sheet.hidden) }, 'Crear quedada');
+  const sheet = h('div', { class: 'sheet-wrap', hidden: true },
+    h('form', { class: 'create sheet glass', onsubmit: create, novalidate: true, 'aria-label': 'Nueva quedada' },
       row(null, title),
       h('div', { class: 'row compact-row' },
         h('div', { class: 'stepper', role: 'group', 'aria-label': 'Personas, contándote a ti' }, minus, nOut, plus),
@@ -302,6 +308,7 @@ async function renderHome() {
       err));
   function openCreate(open) {
     sheet.hidden = !open;
+    openBtn.setAttribute('aria-expanded', String(open));
     if (open) { err.textContent = ''; title.focus({ preventScroll: true }); }
   }
   sheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') openCreate(false); });
@@ -311,11 +318,11 @@ async function renderHome() {
       nameBox = h('div', { class: 'home-name glass' }, nc.rows[0].children[0], nc.rows[0].children[1]),
       sessions.length ? h('button', { type: 'button', class: 'icon-btn home-account', 'aria-label': 'Copiar mi enlace personal (todas mis quedadas)', title: 'Mi enlace personal', onclick: copyAccountLink }, icon('clip')) : null),
     h('div', { class: 'group-body glass home-pal' }, palWrap),
-    h('button', { type: 'button', class: 'btn primary wide open-create', onclick: () => openCreate(true) }, 'Crear quedada'),
+    openBtn,
+    // se despliega debajo del botón: título, personas y horas; el check de abajo a la derecha la crea
+    sheet,
     memoryBanner(),
-    list),
-  // ventana para crear: título, personas y horas; el check de abajo a la derecha la crea
-  sheet);
+    list));
   setN(n);
   fillHomeBest(sessions).catch((e) => console.error(e));
 }
