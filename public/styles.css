@@ -34,7 +34,8 @@
   --safe-r: env(safe-area-inset-right, 0px);
   --gut: 16px;
   /* rejilla */
-  --hc: 26px;   /* columna de horas */
+  --ac: 28px;  /* columna de la flecha derecha */
+  --hc: 28px;   /* columna de horas */
   --gap: 4px;
   --ch: 46px;   /* alto de celda (mínimo 44) */
 }
@@ -319,6 +320,8 @@ button.chip:active { transform: scale(0.96); }
 .hint-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 15px; }
 
 /* ---------- rejilla ---------- */
+.day-head .week-btn { width: 100%; height: 44px; border-radius: 14px; box-shadow: none; }
+.day-head .week-btn .ico { width: 20px; height: 20px; }
 .board { display: flex; flex-direction: column; gap: 10px; }
 .week-nav { display: flex; align-items: center; gap: 8px; }
 .week-btn {
@@ -346,9 +349,10 @@ button.chip:active { transform: scale(0.96); }
 .tool .ico { width: 16px; height: 16px; }
 .tool:active { background: var(--fill); }
 
-.day-head, .board-body { display: grid; grid-template-columns: var(--hc) 1fr; column-gap: var(--gap); }
+.day-head, .board-body { display: grid; grid-template-columns: var(--hc) 1fr var(--ac); column-gap: var(--gap); }
 .day-head {
-  grid-template-columns: var(--hc) repeat(7, 1fr);
+  grid-template-columns: var(--hc) repeat(7, 1fr) var(--ac);
+  align-items: center;
   position: sticky; top: var(--safe-t); z-index: 4;
   margin: 0 calc(-1 * var(--gut)); padding: 6px var(--gut) 6px;
   /* opaca: las horas que pasan por debajo no se transparentan junto a la esquina */

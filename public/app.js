@@ -521,12 +521,8 @@ function renderSession() {
     send: h('button', { type: 'button', class: 'btn primary send-btn' }, 'Enviar'),
   };
   els.board = h('section', { class: 'board', 'aria-label': 'Rejilla de horas' },
-    h('div', { class: 'week-nav' }, els.prev, h('div', { class: 'week-mid' }, els.weekLabel, els.dots), els.next),
-    h('div', { class: 'tools' },
-      h('button', { type: 'button', class: 'tool', onclick: repeatThisWeek }, icon('repeat'), 'Repetir esta semana'),
-      h('button', { type: 'button', class: 'tool', onclick: clearThisWeek }, icon('erase'), 'Borrar semana')),
     els.dayHead,
-    h('div', { class: 'board-body' }, els.hours, els.cells),
+    h('div', { class: 'board-body' }, els.hours, els.cells, h('span')),
     h('p', { class: 'board-tip', text: 'Toca o arrastra sobre las horas para marcar cuándo puedes. Para desplazarte, desliza por la columna de horas o fuera de la rejilla.' }));
   root.replaceChildren(h('main', { class: 'screen session' },
     h('nav', { class: 'navrow' },
@@ -637,22 +633,17 @@ function fillGrid({ dir = 0 } = {}) {
   const editableFrom = Math.max(0, today);
 
   // navegación de semanas
-  els.weekLabel.textContent = weekLabel(session, w);
   els.prev.disabled = w <= 0;
   els.next.disabled = w >= nW - 1;
-  els.dots.replaceChildren(...Array.from({ length: nW }, (_, i) => h('button', {
-    type: 'button', role: 'tab', class: `wdot${i === w ? ' on' : ''}${C.weekHasFull(session, counts, required, i, editableFrom) ? ' gold' : ''}`,
-    'aria-selected': String(i === w), 'aria-label': `Semana del ${weekLabel(session, i)}`, onclick: () => setWeek(i),
-  }, h('span'))));
 
   // cabecera de días
-  els.dayHead.replaceChildren(h('span', { class: 'corner' }), ...Array.from({ length: 7 }, (_, wd) => {
+  els.dayHead.replaceChildren(els.prev, ...Array.from({ length: 7 }, (_, wd) => {
     const day = first + wd;
     const date = C.addDays(session.startDate, day);
     const out = day < 0 || day >= C.DAYS;
     return h('span', { class: `dh${day === today ? ' today' : ''}${day < today || out ? ' past' : ''}`, 'aria-label': C.formatDayLong(date) },
       h('span', { class: 'dh-w', text: C.WEEKDAYS_SHORT[wd] }), h('span', { class: 'dh-n', text: String(C.dateParts(date).d) }));
-  }));
+  }), els.next);
 
   // columna de horas
   els.hours.replaceChildren(...Array.from({ length: hours }, (_, k) => h('span', { class: 'hl', text: String(session.startH + k) })));
