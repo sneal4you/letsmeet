@@ -292,6 +292,7 @@ async function fillHomeBest(sessions) {
     let blocks = [];
     let people = [];
     let myColor = null;
+    let total = 0;
     try {
       const dec = C.decodeLink(s.data);
       if (dec) {
@@ -302,6 +303,7 @@ async function fillHomeBest(sessions) {
         const others = eng.people().filter((p) => !me || p.pid !== me.pid);
         const ps = others.map((p) => ({ pid: p.pid, slots: p.slots }));
         if (me?.name) { try { ps.push({ pid: me.pid, slots: C.slotsFromB64(session, me.slots) }); } catch { /* copia dañada */ } }
+        total = session.n;
         people = [...(me?.name ? [{ name: me.name, color: me.color }] : []), ...others.map((p) => ({ name: p.name, color: p.color }))];
         const today = C.todayIndex(session);
         const now = new Date();
@@ -314,7 +316,9 @@ async function fillHomeBest(sessions) {
     out.replaceChildren(...(full.length
       ? full.map((b) => h('span', { class: 'list-sub', text: `${C.formatDayShort(b.date)} · ${C.formatTime(b.startH)}–${C.formatTime(b.endH)} · Todos` }))
       : people.length
-        ? [h('span', { class: 'list-sub best-who' }, ...people.map((p) => h('span', { class: `who ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.name)))]
+        ? [h('span', { class: 'list-sub best-who' }, ...people.map((p) => h('span', { class: `who ${colorClass(p.color)}` }, h('span', { class: 'chip-dot' }), p.name)),
+            ...Array.from({ length: Math.max(0, total - people.length) }, () => h('span', { class: 'mini-pending', text: 'Pendiente' })),
+            h('span', { class: 'list-count', text: `${people.length}/${Math.max(total, people.length)}` }))]
         : [h('span', { class: 'list-sub', text: 'Aún nadie ha marcado' })]));
     rowEl.classList.toggle('full', full.length > 0);
     if (myColor) rowEl.classList.add('mine', colorClass(myColor));
