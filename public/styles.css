@@ -557,3 +557,4 @@ button.chip:active { transform: scale(0.96); }
 .list-best .mini-pending { min-height: 22px; padding: 0 9px; font-size: 12px; }
 
 .home-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.icon-btn.danger { color: var(--red, #ff3b30); }
