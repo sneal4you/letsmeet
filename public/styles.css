@@ -660,3 +660,4 @@ button.chip:active { transform: scale(0.96); }
 .board-foot .best .best-item { padding: 3px 10px; }
 .board-foot .best .best-when { font-size: 12px; }
 .screen.session .board-foot .legend { justify-content: flex-start; align-content: flex-start; }
+.screen.session .board-foot { margin: 6px 0 4px; }
