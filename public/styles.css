@@ -428,8 +428,8 @@ button.chip:active { transform: scale(0.96); }
 .cells.painting .cell::after { transition: none; }
 .cell:focus-visible { outline-offset: 1px; z-index: 2; }
 
-.cells.focusing .cell:not(.hl):not(.out) { opacity: 0.32; }
-.cells.focusing .cell.past:not(.hl) { opacity: 0.2; }
+.cells.focusing .cell:not(.hot):not(.out) { opacity: 0.32; }
+.cells.focusing .cell.past:not(.hot) { opacity: 0.2; }
 
 /* coincidencia total: el relleno siguen siendo los colores; brillo dorado alrededor */
 .cell.full {

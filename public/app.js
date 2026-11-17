@@ -773,7 +773,7 @@ function fillGrid({ dir = 0 } = {}) {
       if (mine) cls += ' mine';
       cls += k % 2 ? ' h2' : ' h1';
       if (full) cls += ' full';
-      if (focusP && C.getBit(focusP.slots, i)) cls += ' hl';
+      if (focusP && C.getBit(focusP.slots, i)) cls += ' hot';
       const avail = ps.filter((p) => C.getBit(p.slots, i));
       const hour = C.slotHour(session, k);
       const label = `${C.formatDayShort(C.dayDate(session, d))}, ${C.formatTime(hour)}. ${avail.length ? avail.map((p) => (p.me ? 'tú' : p.name)).join(', ') : 'nadie'}${full ? '. Coincidís todos' : ''}`;
