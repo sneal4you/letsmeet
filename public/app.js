@@ -192,7 +192,7 @@ function row(label, control, extra = '') {
 
 // ---------- inicio ----------
 async function renderHome() {
-  document.title = 'Quedamos';
+  document.title = "Let's Meet";
   window.scrollTo(0, 0);
   const sessions = await listSessions();
   const pending = new Set();
@@ -243,7 +243,7 @@ async function renderHome() {
   const iosApp = isIOS && standalone();
   root.replaceChildren(h('main', { class: 'screen home' },
     h('header', { class: 'brand' }, brandMark(),
-      h('h1', { class: 'large-title', text: 'Quedamos' }),
+      h('h1', { class: 'large-title', text: "Let's Meet" }),
       h('p', { class: 'brand-sub', text: 'Cada uno marca cuándo puede. Veis al momento a qué hora coincidís.' })),
     memoryBanner(),
     iosApp && !sessions.length ? pasteLinkCard(true) : null,
@@ -309,7 +309,7 @@ async function openSession(session, me) {
   ctx.unsub = engine.on(onEngine);
   engine.start();
   adoptRemote();
-  document.title = `${session.title} · Quedamos`;
+  document.title = `${session.title} · Let's Meet`;
   if (!ctx.me || !ctx.me.name) renderJoin(); else renderSession();
 }
 
@@ -468,7 +468,7 @@ function renderJoin() {
   let note = null;
   if (isIOS && standalone()) note = '¿Ya te uniste desde Safari? Esta app guarda sus datos aparte: abre allí Ajustes de la quedada, copia tu enlace personal y pégalo en el inicio de esta app.';
   // En iPhone, WhatsApp abre los enlaces en SFSafariViewController (datos aparte de Safari) sin rastro en el UA: aviso siempre.
-  else if (isIOS) note = 'Guarda tu enlace personal (Ajustes > Copiar) por si abres Quedamos en otro navegador o app.';
+  else if (isIOS) note = "Guarda tu enlace personal (Ajustes > Copiar) por si abres Let's Meet en otro navegador o app.";
   else if (inAppBrowser) note = 'Lo que marques se guarda en este navegador. Si luego lo abres en otro, copia antes tu enlace personal en Ajustes para seguir siendo tú.';
 
   root.replaceChildren(h('main', { class: 'screen join' },
@@ -864,7 +864,7 @@ function fillBest() {
 async function invite() {
   const url = inviteUrl(ctx.session);
   if (navigator.share) {
-    try { await navigator.share({ title: `Quedamos: ${ctx.session.title}`, text: `Marca cuándo puedes para «${ctx.session.title}»:`, url }); return; } catch (e) { if (e?.name === 'AbortError') return; }
+    try { await navigator.share({ title: `Let's Meet: ${ctx.session.title}`, text: `Marca cuándo puedes para «${ctx.session.title}»:`, url }); return; } catch (e) { if (e?.name === 'AbortError') return; }
   }
   if (await copyText(url)) toast('Enlace copiado. Pégalo en el grupo.');
   else toast('No se ha podido copiar. Copia la dirección de la barra del navegador.');
@@ -933,7 +933,7 @@ function registerSW() {
   const hadController = !!navigator.serviceWorker.controller; // en la primera instalación no se recarga
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloading || !hadController) return; reloading = true; flushMe(); location.reload(); });
   navigator.serviceWorker.register('sw.js').then((reg) => {
-    const offer = (w) => toast('Hay una versión nueva de Quedamos.', { label: 'Actualizar', fn: () => w.postMessage('SKIP_WAITING') }, 8000);
+    const offer = (w) => toast("Hay una versión nueva de Let's Meet.", { label: 'Actualizar', fn: () => w.postMessage('SKIP_WAITING') }, 8000);
     if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
     reg.addEventListener('updatefound', () => {
       const w = reg.installing;
@@ -946,5 +946,5 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ctx?.vie
 
 boot().catch((e) => {
   console.error(e);
-  root.replaceChildren(h('main', { class: 'screen' }, h('div', { class: 'group-body glass pad' }, h('h1', { text: 'No se ha podido abrir Quedamos' }), h('p', { class: 'muted', text: String(e?.message || e) }))));
+  root.replaceChildren(h('main', { class: 'screen' }, h('div', { class: 'group-body glass pad' }, h('h1', { text: "No se ha podido abrir Let's Meet" }), h('p', { class: 'muted', text: String(e?.message || e) }))));
 });

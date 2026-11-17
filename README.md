@@ -1,4 +1,4 @@
-# Quedamos
+# Let's Meet
 
 PWA para cuadrar horas entre varias personas. Una persona crea la quedada y pasa **un enlace** por WhatsApp. Cada persona lo abre una vez, elige nombre y color, marca sus horas libres directamente en una rejilla de horas (7 días a la vista, 30 días en total) y pulsa **Enviar**. Su horario llega solo a todos los demás y queda guardado en el móvil de cada uno. Nadie tiene que volver a abrir enlaces. Si coincidís todos en una hora, esa franja brilla.
 
@@ -91,7 +91,7 @@ Para probar en el móvil dentro de la red local hace falta HTTPS (WebCrypto y el
    ```
    git init
    git add public scripts tests README.md package.json .gitignore
-   git commit -m "Quedamos"
+   git commit -m "Let's Meet"
    git branch -M main
    git remote add origin https://github.com/<usuario>/quedamos.git
    git push -u origin main
