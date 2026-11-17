@@ -636,7 +636,9 @@ button.chip:active { transform: scale(0.96); }
 .cell.filled { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 3px rgba(0, 0, 0, 0.25); }
 .screen.session { --gap: 4px; }
 .cell.filled.full { box-shadow: 0 0 0 1.5px var(--gold); }
-.dh-back { display: flex; align-items: center; justify-content: center; gap: 0; border: 0; background: var(--accent-soft); color: var(--accent); border-radius: 11px; height: 34px; padding: 0 2px; font: inherit; font-size: 12px; font-weight: 700; }
-.dh-back .ico { width: 14px; height: 14px; stroke-width: 2.6; flex: none; }
-.dh-back:active { transform: scale(0.94); }
-.dh-back { font-size: 10.5px; letter-spacing: 0; overflow: hidden; } .dh-back .ico { width: 11px; height: 11px; }
+/* mes y, a su derecha, la flecha de la semana anterior */
+.dh-month-nav { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 3px; }
+.screen.session { --hc: 54px; }
+.dh-back { display: grid; place-items: center; width: 20px; height: 26px; padding: 0; border: 0; border-radius: 8px; background: var(--accent-soft); color: var(--accent); }
+.dh-back .ico { width: 13px; height: 13px; stroke-width: 2.6; }
+.dh-back:active { transform: scale(0.92); }
