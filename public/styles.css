@@ -697,8 +697,20 @@ button.chip:active { transform: scale(0.96); }
 .name-check { display: grid; place-items: center; color: var(--ok); flex: none; }
 .name-check .ico { width: 16px; height: 16px; stroke-width: 2.8; }
 .name-check[hidden] { display: none; }
-.screen.home .brand .home-name { flex: 0 1 122px; min-width: 0; height: 38px; padding: 0 10px 0 5px; gap: 5px; }
-.screen.home .brand .home-name .color-toggle { width: 26px; height: 26px; box-shadow: none; border: 0; }
+.screen.home .brand .home-name { flex: 0 1 122px; min-width: 0; height: 38px; padding: 0 5px 0 12px; gap: 5px; }
+.screen.home .brand .home-name .color-toggle { width: 26px; height: 26px; }
 .screen.home .brand .home-name .input { font-size: 14px; }
 .screen.home .brand .home-account { width: 38px; height: 38px; }
 .screen.home .brand .large-title { font-size: 22px; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* inicio: botón Crear quedada bajo la cabecera */
+.screen.home .open-create { margin: 4px 0 2px; }
+/* ventana de nueva quedada */
+.sheet-wrap { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: rise 0.2s var(--ease) both; }
+.sheet-wrap[hidden] { display: none; }
+.sheet { width: 100%; max-width: 560px; border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; gap: 0; }
+.sheet .form-error:empty { display: none; }
+.sheet .form-error { padding: 0 16px 12px; margin: 0; }
+.sheet .compact-row { gap: 8px; }
+.create-ok { flex: none; width: 38px; height: 38px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35); }
+.create-ok .ico { width: 20px; height: 20px; stroke-width: 2.8; }
+.create-ok:active { transform: scale(0.92); }

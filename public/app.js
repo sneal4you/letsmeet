@@ -250,6 +250,9 @@ async function renderHome() {
   const check = h('span', { class: 'name-check', 'aria-hidden': 'true' }, icon('check'));
   const saveProf = () => { const ok = C.validateName(name.value).ok; check.hidden = !ok; store.set('profile', { name: ok ? C.cleanName(name.value) : '', color }).catch(() => {}); };
   name.addEventListener('input', saveProf);
+  // al terminar de escribir el nombre, el cursor no se queda parpadeando
+  name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
+  name.addEventListener('change', () => name.blur());
   const drawPal = () => { nc.paint(color); palWrap.replaceChildren(palette({ selected: color, taken: new Map(), onPick: (c) => { color = c; nc.close(); drawPal(); saveProf(); } })); };
   drawPal();
   check.hidden = !C.validateName(name.value).ok;
@@ -283,22 +286,30 @@ async function renderHome() {
     : null;
   list?.classList.add("sessions");
 
+  const sheet = h('div', { class: 'sheet-wrap', hidden: true, onclick: (e) => { if (e.target === sheet) openCreate(false); } },
+    h('form', { class: 'create sheet glass', onsubmit: create, novalidate: true, role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Nueva quedada' },
+      row(null, title),
+      h('div', { class: 'row compact-row' },
+        h('div', { class: 'stepper', role: 'group', 'aria-label': 'Personas, contándote a ti' }, minus, nOut, plus),
+        h('div', { class: 'range', role: 'group', 'aria-label': 'Horas' }, from, h('span', { class: 'muted', text: 'a' }), to),
+        h('button', { type: 'submit', class: 'create-ok', 'aria-label': 'Crear quedada' }, icon('check'))),
+      err));
+  function openCreate(open) {
+    sheet.hidden = !open;
+    if (open) { err.textContent = ''; title.focus({ preventScroll: true }); }
+  }
+  sheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') openCreate(false); });
   root.replaceChildren(h('main', { class: 'screen home' },
     h('header', { class: 'brand' }, brandMark(),
       h('h1', { class: 'large-title', text: "Let's Meet" }),
-      h('div', { class: 'home-name glass' }, nc.rows[0].children[1], nc.rows[0].children[0], check),
+      h('div', { class: 'home-name glass' }, nc.rows[0].children[0], nc.rows[0].children[1]),
       sessions.length ? h('button', { type: 'button', class: 'icon-btn home-account', 'aria-label': 'Copiar mi enlace personal (todas mis quedadas)', title: 'Mi enlace personal', onclick: copyAccountLink }, icon('clip')) : null),
     h('div', { class: 'group-body glass home-pal' }, palWrap),
+    h('button', { type: 'button', class: 'btn primary wide open-create', onclick: () => openCreate(true) }, 'Crear quedada'),
     memoryBanner(),
-    list,
-    h('form', { class: 'create', onsubmit: create, novalidate: true },
-      group('Nueva quedada',
-        row(null, title),
-        h('div', { class: 'row compact-row' },
-          h('div', { class: 'stepper', role: 'group', 'aria-label': 'Personas, contándote a ti' }, minus, nOut, plus),
-          h('div', { class: 'range', role: 'group', 'aria-label': 'Horas' }, from, h('span', { class: 'muted', text: 'a' }), to))),
-      err,
-      h('button', { type: 'submit', class: 'btn primary wide' }, 'Crear quedada'))));
+    list),
+  // ventana para crear: título, personas y horas; el check de abajo a la derecha la crea
+  sheet);
   setN(n);
   fillHomeBest(sessions).catch((e) => console.error(e));
 }
