@@ -615,3 +615,7 @@ button.chip:active { transform: scale(0.96); }
 .group.sessions .link-row .icon-btn { width: 34px; height: 34px; min-width: 0; padding: 0; flex: none; }
 .group.sessions .link-row .icon-btn .ico { width: 18px; height: 18px; }
 .group.sessions .list-main { flex: 1; min-width: 0; }
+.home-chips .chip { min-height: 24px; font-size: 13px; padding: 0 9px 0 7px; gap: 5px; }
+.home-chips .chip.pending { padding: 0 9px; }
+.home-chips .chip-dot { width: 8px; height: 8px; }
+.home-chips { gap: 4px; margin-top: 6px; }
