@@ -505,6 +505,9 @@ function renderJoin() {
   const name = h('input', { class: 'input bare', maxlength: C.NAME_MAX, placeholder: 'Tu nombre', autocomplete: 'given-name', enterkeyhint: 'done', 'aria-label': 'Tu nombre' });
   const err = h('p', { class: 'form-error', role: 'alert' });
   const who = h('div', { class: 'chips' });
+  const fullMsg = h('p', { class: 'banner warn', role: 'alert', hidden: true });
+  // Quedada completa: ya han entrado tantas personas como se indicó al crearla (quien recupera su identidad sí entra).
+  const isFullJoin = () => !restored && ctx.engine.people().filter((p) => p.pid !== ctx.me?.pid).length >= session.n;
   const palWrap = h('div', { class: 'row-block' });
   const nc = nameColor(name, palWrap);
   ctx.els = { who, palWrap };
@@ -520,11 +523,14 @@ function renderJoin() {
       empty = c.open || (c.connecting && navigator.onLine !== false) ? 'Buscando a los demás…' : 'Sin conexión: no se puede ver quién está.';
     }
     who.replaceChildren(...(ps.length ? ps.map((p) => chip(p)) : [h('span', { class: 'muted small', text: empty })]));
+    const full = isFullJoin();
+    fullMsg.hidden = !full;
+    fullMsg.textContent = `Esta quedada ya está completa: ya han entrado las ${session.n} personas. Si eres una de ellas, abre tu enlace personal.`;
+    if (ctx.els.form) ctx.els.form.hidden = full;
   };
-  ctx.drawJoin();
-
   async function join(e) {
     e.preventDefault();
+    if (isFullJoin()) { ctx.drawJoin(); return; }
     const others = ctx.engine.people().filter((p) => p.pid !== ctx.me?.pid).map((p) => p.name);
     const nm = C.validateName(name.value, others);
     if (!nm.ok) {
@@ -542,7 +548,7 @@ function renderJoin() {
   // Avisos para no confundir "he perdido mis datos": app de inicio en iPhone y navegadores dentro de otras apps.
   let note = null;
   // En iPhone, WhatsApp abre los enlaces en SFSafariViewController (datos aparte de Safari) sin rastro en el UA: aviso siempre.
-  if (isIOS) note = "Guarda tu enlace personal (botón de la persona, arriba a la derecha) por si abres Let's Meet en otro navegador o app.";
+  if (isIOS) note = "Guarda tu enlace personal (botón de la persona, arriba a la derecha del inicio) por si abres Let's Meet en otro navegador o app.";
   else if (inAppBrowser) note = 'Lo que marques se guarda en este navegador. Si luego lo abres en otro, copia antes tu enlace personal (botón de la persona) para seguir siendo tú.';
 
   root.replaceChildren(h('main', { class: 'screen join' },
@@ -553,11 +559,13 @@ function renderJoin() {
       h('p', { class: 'muted', text: sessionSummary(session) })),
     h('section', { class: 'group' }, h('h2', { class: 'group-title', text: 'Ya están' }), h('div', { class: 'group-body glass pad' }, who)),
     restored ? h('p', { class: 'banner', text: 'Buscando tu horario en los relés. Si no aparece, escribe tu nombre para seguir.' }) : null,
-    h('form', { class: 'create', onsubmit: join, novalidate: true },
+    fullMsg,
+    ctx.els.form = h('form', { class: 'create', onsubmit: join, novalidate: true },
       group('Nombre', nc.rows),
       err,
       h('button', { type: 'submit', class: 'btn primary wide' }, 'Entrar y marcar mis horas')),
     note ? h('p', { class: 'foot', text: note }) : h('p', { class: 'foot', text: 'Sin cuentas. Tu horario viaja cifrado: solo lo ve quien tiene el enlace.' })));
+  ctx.drawJoin();
 }
 function fillJoinLive() { ctx.drawJoin?.(); }
 
