@@ -1,0 +1,14 @@
+{
+  "name": "quedamos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PWA para cuadrar horas entre varias personas, sin backend.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/*.test.mjs\"",
+    "serve": "node scripts/serve.mjs 8080",
+    "icons": "node scripts/icons.mjs",
+    "live-test": "node scripts/live-test.mjs"
+  },
+  "license": "MIT"
+}
