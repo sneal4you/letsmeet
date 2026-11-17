@@ -606,16 +606,13 @@ function renderSession() {
     els.dayHead,
     h('div', { class: 'board-body' }, els.hours, els.cells, h('span')));
   root.replaceChildren(h('main', { class: 'screen session' },
-    h('nav', { class: 'navrow' },
-      h('div', { class: 'nav-info' },
-        els.chips)),
+    h('div', { class: 'sendbar glass' }, els.status, els.send),
     h('h1', { class: 'sr-only', text: session.title }),
     memoryBanner(),
     els.hint,
     els.board,
-    els.best),
-  // fuera de .screen: su animación de entrada (transform) haría que position: fixed se refiriese a ella
-  h('div', { class: 'sendbar glass' }, els.status, els.send));
+    // debajo del calendario: participantes a la izquierda, mejores horas a la derecha
+    h('div', { class: 'board-foot' }, els.chips, els.best)));
   bindGrid(els.cells);
   // deslizar la cabecera de días a izquierda/derecha cambia de semana
   let sx = null;

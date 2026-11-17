@@ -648,3 +648,15 @@ button.chip:active { transform: scale(0.96); }
 .send-btn { min-height: 28px; min-width: 80px; font-size: 14px; }
 .send-status { font-size: 13px; }
 .screen.session { padding-bottom: calc(48px + var(--safe-b)); }
+/* barra de enviar arriba del todo, dentro de la pantalla */
+.screen.session .sendbar { position: static; margin: 0; max-width: none; }
+.screen.session { padding-bottom: calc(8px + var(--safe-b)); }
+/* pie del calendario: participantes izquierda, mejores horas derecha */
+.board-foot { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.board-foot .legend { justify-content: flex-start; flex: 1 1 auto; min-width: 0; }
+.board-foot .best { flex: 0 1 auto; min-width: 0; }
+.board-foot .best .best-list { flex-wrap: wrap; justify-content: flex-end; overflow: visible; scroll-snap-type: none; margin: 0; padding: 0; gap: 4px; }
+.board-foot .best .best-list li { flex: 0 0 auto; width: auto; }
+.board-foot .best .best-item { padding: 3px 10px; }
+.board-foot .best .best-when { font-size: 12px; }
+.screen.session .board-foot .legend { justify-content: flex-start; align-content: flex-start; }
